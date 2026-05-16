@@ -1,0 +1,16 @@
+# Project-scoped Codex configuration.
+# User-level configuration belongs in ~/.codex/config.toml.
+# Codex loads project-scoped config only after the project is trusted.
+
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+project_doc_max_bytes = 65536
+
+# If the team later adds extra instruction file names, list them here.
+# Codex checks AGENTS.override.md and AGENTS.md first.
+project_doc_fallback_filenames = ["AGENTS.local.md", ".agents.md"]
+
+# Keep network disabled by default for safer local coding.
+# Enable per task only when external package/docs access is required.
+[sandbox_workspace_write]
+network_access = false

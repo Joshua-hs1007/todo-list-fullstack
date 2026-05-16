@@ -1,0 +1,6 @@
+
+# Codex local/private overrides
+AGENTS.override.md
+AGENTS.local.md
+.codex/local.toml
+.codex/*.local.toml
