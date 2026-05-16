@@ -1,0 +1,33 @@
+{
+  "name": "todo-list-challenge",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.1.2",
+  "engines": {
+    "node": ">=22.13 <25",
+    "pnpm": ">=11 <12"
+  },
+  "scripts": {
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "api:dev": "pnpm --filter @todo/api dev",
+    "api:build": "pnpm --filter @todo/api build",
+    "api:test": "pnpm --filter @todo/api test",
+    "api:test:coverage": "pnpm --filter @todo/api test:coverage",
+    "web:dev": "pnpm --filter @todo/web dev",
+    "web:build": "pnpm --filter @todo/web build",
+    "web:test": "pnpm --filter @todo/web test",
+    "web:test:coverage": "pnpm --filter @todo/web test:coverage",
+    "test:e2e": "pnpm --filter @todo/web test:e2e",
+    "db:generate": "pnpm --filter @todo/api db:generate",
+    "db:migrate": "pnpm --filter @todo/api db:migrate",
+    "db:migrate:deploy": "pnpm --filter @todo/api db:migrate:deploy"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "eslint": "^9.39.1",
+    "prettier": "^3.6.2",
+    "typescript-eslint": "^8.48.0"
+  }
+}
