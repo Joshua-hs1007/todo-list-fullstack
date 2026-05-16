@@ -6,7 +6,7 @@ Full-stack To Do List application scaffolded as a pnpm workspace with an Angular
 
 - Node.js: LTS-compatible `>=22.13 <25`
 - pnpm: `11.1.2`
-- Angular: `21.2.12`
+- Angular: `21.2.11`
 - TypeScript: `5.9.3` for Angular 21 compatibility
 - Express: `5.2.1`
 - Prisma: `7.8.0`
