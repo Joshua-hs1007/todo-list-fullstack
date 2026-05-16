@@ -43,6 +43,7 @@ The goal of the architecture is to stay simple enough for a take-home engineerin
 - JWT authentication
 - bcrypt or argon2 for password hashing
 - Zod for request validation
+- OpenAPI documentation for the REST API contract
 - Jest and Supertest for API tests
 
 ### Tooling
@@ -76,6 +77,8 @@ todo-list-challenge/
         server.ts
         config/
           env.ts
+        docs/
+          openapi.ts
         modules/
           auth/
             auth.routes.ts
@@ -142,7 +145,7 @@ todo-list-challenge/
 
 ## Backend Architecture
 
-The backend owns authentication, authorization, validation, persistence, task ownership, task reordering, and API error handling.
+The backend owns authentication, authorization, validation, persistence, task ownership, task reordering, API error handling, and OpenAPI documentation.
 
 ### Backend Responsibilities
 
@@ -155,6 +158,7 @@ The backend owns authentication, authorization, validation, persistence, task ow
 - Use Prisma for database access.
 - Use database transactions where multiple related writes are required.
 - Return predictable HTTP status codes and error responses.
+- Publish OpenAPI documentation that matches the implemented routes, request schemas, response payloads, auth requirements, and error responses.
 
 ## Backend Request Flow
 
@@ -236,6 +240,27 @@ Recommended middleware:
 - `error.middleware.ts`
   - Converts expected application errors into HTTP responses.
   - Hides internal implementation details for unexpected errors.
+
+### API Documentation
+
+The backend should expose OpenAPI documentation for the REST API contract.
+
+Recommended files:
+
+- `docs/openapi.ts`
+  - Defines the OpenAPI document, including API metadata, server URLs, security schemes, shared schemas, route operations, request bodies, responses, and error shapes.
+  - Documents JWT bearer authentication for protected task routes and `/api/auth/me`.
+  - Reuses or mirrors the Zod request schemas closely enough that implementation and documentation cannot drift silently.
+
+Recommended endpoints:
+
+- `GET /api/docs`
+  - Serves a Swagger UI or equivalent interactive API documentation page.
+
+- `GET /api/openapi.json`
+  - Serves the raw OpenAPI JSON document for tooling, client generation, and contract checks.
+
+OpenAPI documentation should be updated whenever routes, request validation, response shapes, status codes, or authentication requirements change.
 
 ### Lib
 
