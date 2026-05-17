@@ -3,6 +3,16 @@ import { Injectable, inject } from '@angular/core';
 
 const apiUrl = '/api';
 
+export interface ApiUser {
+  id: string;
+  email: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: ApiUser;
+}
+
 export interface ApiTask {
   id: string;
   title: string;
@@ -15,6 +25,18 @@ export interface ApiTask {
 @Injectable({ providedIn: 'root' })
 export class ApiClient {
   private readonly http = inject(HttpClient);
+
+  register(input: { email: string; password: string }) {
+    return this.http.post<AuthResponse>(`${apiUrl}/auth/register`, input);
+  }
+
+  login(input: { email: string; password: string }) {
+    return this.http.post<AuthResponse>(`${apiUrl}/auth/login`, input);
+  }
+
+  me() {
+    return this.http.get<{ user: ApiUser }>(`${apiUrl}/auth/me`);
+  }
 
   listTasks(query: { search?: string; status?: ApiTask['status'] }) {
     let params = new HttpParams();
