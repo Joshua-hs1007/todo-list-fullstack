@@ -1,5 +1,6 @@
 import cors from 'cors';
 import express from 'express';
+import type { Express } from 'express';
 import helmet from 'helmet';
 import swaggerUi from 'swagger-ui-express';
 
@@ -9,7 +10,7 @@ import { errorHandler, notFoundHandler } from './middleware/error.middleware.js'
 import { authRoutes } from './modules/auth/auth.routes.js';
 import { taskRoutes } from './modules/tasks/task.routes.js';
 
-export function createApp() {
+export function createApp(): Express {
   const app = express();
 
   app.use(helmet());
@@ -34,4 +35,4 @@ export function createApp() {
   return app;
 }
 
-export const app = createApp();
+export const app: Express = createApp();
