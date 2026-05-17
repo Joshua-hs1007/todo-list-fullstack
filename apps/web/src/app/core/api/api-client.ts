@@ -20,6 +20,8 @@ export interface ApiTask {
   status: 'TODO' | 'IN_PROGRESS' | 'DONE';
   dueDate?: string;
   position: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -49,19 +51,19 @@ export class ApiClient {
       params = params.set('status', query.status);
     }
 
-    return this.http.get<ApiTask[]>(`${apiUrl}/tasks`, { params });
+    return this.http.get<{ tasks: ApiTask[] }>(`${apiUrl}/tasks`, { params });
   }
 
   getTask(id: string) {
-    return this.http.get<ApiTask>(`${apiUrl}/tasks/${id}`);
+    return this.http.get<{ task: ApiTask }>(`${apiUrl}/tasks/${id}`);
   }
 
-  createTask(input: Partial<ApiTask>) {
-    return this.http.post<ApiTask>(`${apiUrl}/tasks`, input);
+  createTask(input: TaskSaveInput) {
+    return this.http.post<{ task: ApiTask }>(`${apiUrl}/tasks`, input);
   }
 
-  updateTask(id: string, input: Partial<ApiTask>) {
-    return this.http.patch<ApiTask>(`${apiUrl}/tasks/${id}`, input);
+  updateTask(id: string, input: TaskSaveInput) {
+    return this.http.patch<{ task: ApiTask }>(`${apiUrl}/tasks/${id}`, input);
   }
 
   deleteTask(id: string) {
@@ -69,6 +71,13 @@ export class ApiClient {
   }
 
   reorderTasks(orderedTaskIds: string[]) {
-    return this.http.patch<ApiTask[]>(`${apiUrl}/tasks/reorder`, { orderedTaskIds });
+    return this.http.patch<{ tasks: ApiTask[] }>(`${apiUrl}/tasks/reorder`, { orderedTaskIds });
   }
+}
+
+export interface TaskSaveInput {
+  title: string;
+  description?: string;
+  status?: ApiTask['status'];
+  dueDate?: string;
 }
