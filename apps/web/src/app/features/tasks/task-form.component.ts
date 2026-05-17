@@ -10,42 +10,95 @@ import type { ApiTask, TaskSaveInput } from '../../core/api/api-client';
   imports: [ReactiveFormsModule],
   template: `
     <form [formGroup]="form" class="task-form" (ngSubmit)="submit()">
-      <label>
-        Title
-        <input formControlName="title" />
-      </label>
-      <label>
-        Description
-        <textarea formControlName="description" rows="4"></textarea>
-      </label>
-      <label>
-        Status
-        <select formControlName="status">
+      <div class="field field-full">
+        <label for="task-title">Title</label>
+        <input id="task-title" formControlName="title" placeholder="What needs to get done?" />
+      </div>
+      <div class="field field-full">
+        <label for="task-description">Description</label>
+        <textarea
+          id="task-description"
+          formControlName="description"
+          rows="5"
+          placeholder="Add context, acceptance notes, or links."
+        ></textarea>
+      </div>
+      <div class="field">
+        <label for="task-status">Status</label>
+        <select id="task-status" formControlName="status">
           <option value="TODO">To do</option>
           <option value="IN_PROGRESS">In progress</option>
           <option value="DONE">Done</option>
         </select>
-      </label>
-      <label>
-        Due date
-        <input type="date" formControlName="dueDate" />
-      </label>
-      <button type="submit" [disabled]="form.invalid || saving()">
-        {{ saving() ? 'Saving...' : 'Save' }}
-      </button>
+      </div>
+      <div class="field">
+        <label for="task-due-date">Due date</label>
+        <input id="task-due-date" type="date" formControlName="dueDate" />
+      </div>
+      <div class="form-actions field-full">
+        <button type="submit" [disabled]="form.invalid || saving()">
+          {{ saving() ? 'Saving...' : 'Save task' }}
+        </button>
+      </div>
     </form>
   `,
   styles: [
     `
       .task-form {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        box-shadow: var(--shadow-sm);
         display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 1rem;
-        max-width: 560px;
+        max-width: 760px;
+        padding: clamp(1rem, 3vw, 1.5rem);
+      }
+
+      .field {
+        display: grid;
+        gap: 0.35rem;
+      }
+
+      .field-full {
+        grid-column: 1 / -1;
       }
 
       label {
-        display: grid;
-        gap: 0.35rem;
+        color: var(--text);
+        font-weight: 750;
+      }
+
+      .form-actions {
+        border-top: 1px solid var(--border);
+        display: flex;
+        justify-content: flex-end;
+        padding-top: 1rem;
+      }
+
+      button {
+        background: var(--primary);
+        border: 1px solid var(--primary);
+        color: #ffffff;
+        font-weight: 750;
+        min-height: 2.75rem;
+        padding: 0.7rem 1rem;
+      }
+
+      button:hover:not(:disabled) {
+        background: var(--primary-strong);
+      }
+
+      @media (max-width: 640px) {
+        .task-form {
+          grid-template-columns: 1fr;
+        }
+
+        .form-actions,
+        button {
+          width: 100%;
+        }
       }
     `,
   ],

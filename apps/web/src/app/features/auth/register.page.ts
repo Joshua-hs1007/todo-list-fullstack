@@ -11,14 +11,29 @@ import { AuthService } from '../../core/auth/auth.service';
   imports: [ReactiveFormsModule, RouterLink],
   template: `
     <section class="auth-page">
-      <h1>Register</h1>
-      <form [formGroup]="form" (ngSubmit)="submit()">
+      <div class="auth-copy">
+        <p class="eyebrow">Start organized</p>
+        <h1>Create a private workspace for your tasks.</h1>
+        <p>Register once, then keep task planning and status updates in one secure place.</p>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="submit()" class="auth-card">
+        <div class="form-header">
+          <h2>Create account</h2>
+          <p>Use at least 8 characters for your password.</p>
+        </div>
+
         <label>
-          Email
-          <input type="email" formControlName="email" autocomplete="email" />
+          <span>Email</span>
+          <input
+            type="email"
+            formControlName="email"
+            autocomplete="email"
+            placeholder="you@example.com"
+          />
         </label>
         <label>
-          Password
+          <span>Password</span>
           <input type="password" formControlName="password" autocomplete="new-password" />
         </label>
         @if (error()) {
@@ -27,14 +42,54 @@ import { AuthService } from '../../core/auth/auth.service';
         <button type="submit" [disabled]="form.invalid || loading()">
           {{ loading() ? 'Creating account...' : 'Create account' }}
         </button>
-        <a routerLink="/login">Use an existing account</a>
+        <p class="switch-link">Already registered? <a routerLink="/login">Sign in</a></p>
       </form>
     </section>
   `,
   styles: [
     `
       .auth-page {
-        max-width: 420px;
+        align-items: center;
+        display: grid;
+        gap: clamp(1.5rem, 5vw, 4rem);
+        grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+        min-height: calc(100vh - 150px);
+      }
+
+      .auth-copy {
+        max-width: 560px;
+      }
+
+      .eyebrow {
+        color: var(--primary);
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        margin-bottom: 0.75rem;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        color: var(--text);
+        font-size: clamp(2rem, 5vw, 4rem);
+        line-height: 1.02;
+        margin-bottom: 1rem;
+      }
+
+      .auth-copy p:not(.eyebrow),
+      .form-header p,
+      .switch-link {
+        color: var(--muted);
+      }
+
+      .auth-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        box-shadow: var(--shadow-md);
+        display: grid;
+        gap: 1rem;
+        padding: clamp(1.25rem, 4vw, 2rem);
       }
 
       form {
@@ -42,14 +97,51 @@ import { AuthService } from '../../core/auth/auth.service';
         gap: 1rem;
       }
 
+      .form-header h2 {
+        font-size: 1.25rem;
+        margin-bottom: 0.25rem;
+      }
+
+      .form-header p,
+      .switch-link {
+        margin-bottom: 0;
+      }
+
       label {
+        color: var(--text);
         display: grid;
         gap: 0.35rem;
+        font-weight: 650;
       }
 
       .error {
-        color: #a4243b;
+        background: var(--danger-soft);
+        border: 1px solid #ffd1cc;
+        border-radius: 6px;
+        color: var(--danger);
         margin: 0;
+        padding: 0.75rem;
+      }
+
+      button {
+        background: var(--primary);
+        border: 1px solid var(--primary);
+        color: #ffffff;
+        font-weight: 700;
+        min-height: 2.75rem;
+        padding: 0.7rem 1rem;
+      }
+
+      button:hover:not(:disabled) {
+        background: var(--primary-strong);
+      }
+
+      @media (max-width: 800px) {
+        .auth-page {
+          align-items: stretch;
+          grid-template-columns: 1fr;
+          min-height: auto;
+        }
       }
     `,
   ],

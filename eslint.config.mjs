@@ -7,6 +7,7 @@ export default [
       '**/dist/**',
       '**/coverage/**',
       '**/node_modules/**',
+      '**/.angular/**',
       'apps/api/src/generated/prisma/**',
     ],
   },

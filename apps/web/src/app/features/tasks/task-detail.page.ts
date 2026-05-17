@@ -11,11 +11,15 @@ import type { TaskSaveInput } from '../../core/api/api-client';
   imports: [RouterLink, TaskFormComponent],
   template: `
     <section class="detail-page">
-      <a routerLink="/tasks">Back to tasks</a>
-      <h1>{{ isNew() ? 'New task' : 'Task detail' }}</h1>
+      <a routerLink="/tasks" class="back-link">Back to tasks</a>
+      <header>
+        <p class="eyebrow">{{ isNew() ? 'Create' : 'Edit' }}</p>
+        <h1>{{ isNew() ? 'New task' : 'Task detail' }}</h1>
+        <p>Keep the title crisp, add useful context, and update status as work moves.</p>
+      </header>
 
       @if (store.loading()) {
-        <p>Loading task...</p>
+        <div class="state-panel" aria-live="polite">Loading task...</div>
       } @else {
         @if (store.error()) {
           <p class="error" role="alert">{{ store.error() }}</p>
@@ -32,16 +36,55 @@ import type { TaskSaveInput } from '../../core/api/api-client';
     `
       .detail-page {
         display: grid;
-        gap: 1rem;
+        gap: 1.1rem;
       }
 
-      a {
-        color: #315274;
+      .back-link {
+        color: var(--primary);
+        font-weight: 750;
+        text-decoration: none;
+        width: fit-content;
+      }
+
+      header {
+        max-width: 720px;
+      }
+
+      .eyebrow {
+        color: var(--primary);
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        margin-bottom: 0.35rem;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        font-size: clamp(2rem, 5vw, 3.25rem);
+        line-height: 1.05;
+        margin-bottom: 0.5rem;
+      }
+
+      header p:not(.eyebrow) {
+        color: var(--muted);
+        margin-bottom: 0;
       }
 
       .error {
-        color: #a4243b;
+        background: var(--danger-soft);
+        border: 1px solid #ffd1cc;
+        border-radius: 6px;
+        color: var(--danger);
         margin: 0;
+        padding: 0.75rem;
+      }
+
+      .state-panel {
+        background: var(--surface);
+        border: 1px dashed var(--border-strong);
+        border-radius: 8px;
+        color: var(--muted);
+        padding: 2rem;
       }
     `,
   ],

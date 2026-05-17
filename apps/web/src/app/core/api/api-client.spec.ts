@@ -3,6 +3,7 @@ import type { HttpParams } from '@angular/common/http';
 import { Injector, runInInjectionContext } from '@angular/core';
 import { describe, expect, it, vi } from 'vitest';
 
+import { environment } from '../../../environments/environment';
 import { ApiClient } from './api-client';
 
 describe('ApiClient', () => {
@@ -29,9 +30,13 @@ describe('ApiClient', () => {
     client.login(credentials);
     client.me();
 
-    expect(http.post).toHaveBeenNthCalledWith(1, '/api/auth/register', credentials);
-    expect(http.post).toHaveBeenNthCalledWith(2, '/api/auth/login', credentials);
-    expect(http.get).toHaveBeenCalledWith('/api/auth/me');
+    expect(http.post).toHaveBeenNthCalledWith(
+      1,
+      `${environment.apiUrl}/auth/register`,
+      credentials,
+    );
+    expect(http.post).toHaveBeenNthCalledWith(2, `${environment.apiUrl}/auth/login`, credentials);
+    expect(http.get).toHaveBeenCalledWith(`${environment.apiUrl}/auth/me`);
   });
 
   it('calls task endpoints with query params and request bodies', () => {
@@ -45,14 +50,16 @@ describe('ApiClient', () => {
     client.reorderTasks(['task-2', 'task-1']);
 
     const listOptions = http.get.mock.calls[0]?.[1] as { params: HttpParams };
-    expect(http.get.mock.calls[0]?.[0]).toBe('/api/tasks');
+    expect(http.get.mock.calls[0]?.[0]).toBe(`${environment.apiUrl}/tasks`);
     expect(listOptions.params.get('search')).toBe('invoice');
     expect(listOptions.params.get('status')).toBe('DONE');
-    expect(http.get).toHaveBeenNthCalledWith(2, '/api/tasks/task-1');
-    expect(http.post).toHaveBeenCalledWith('/api/tasks', { title: 'Task' });
-    expect(http.patch).toHaveBeenNthCalledWith(1, '/api/tasks/task-1', { title: 'Updated' });
-    expect(http.delete).toHaveBeenCalledWith('/api/tasks/task-1');
-    expect(http.patch).toHaveBeenNthCalledWith(2, '/api/tasks/reorder', {
+    expect(http.get).toHaveBeenNthCalledWith(2, `${environment.apiUrl}/tasks/task-1`);
+    expect(http.post).toHaveBeenCalledWith(`${environment.apiUrl}/tasks`, { title: 'Task' });
+    expect(http.patch).toHaveBeenNthCalledWith(1, `${environment.apiUrl}/tasks/task-1`, {
+      title: 'Updated',
+    });
+    expect(http.delete).toHaveBeenCalledWith(`${environment.apiUrl}/tasks/task-1`);
+    expect(http.patch).toHaveBeenNthCalledWith(2, `${environment.apiUrl}/tasks/reorder`, {
       orderedTaskIds: ['task-2', 'task-1'],
     });
   });
