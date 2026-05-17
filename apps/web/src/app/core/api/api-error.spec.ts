@@ -1,5 +1,3 @@
-import '@angular/compiler';
-
 import { HttpErrorResponse } from '@angular/common/http';
 import { describe, expect, it } from 'vitest';
 
@@ -22,6 +20,17 @@ describe('getApiErrorMessage', () => {
   it('returns a network message when the API is unavailable', () => {
     expect(getApiErrorMessage(new HttpErrorResponse({ status: 0 }))).toBe(
       'The API is unavailable.',
+    );
+  });
+
+  it('falls back for unknown error shapes', () => {
+    expect(getApiErrorMessage(new Error('boom'))).toBe('Something went wrong.');
+  });
+
+  it('falls back when an HTTP error does not match the API error shape', () => {
+    expect(new HttpErrorResponse({ status: 500, error: { message: 'legacy' } })).toBeTruthy();
+    expect(getApiErrorMessage(new HttpErrorResponse({ status: 500, error: { message: 'legacy' } }))).toBe(
+      'Something went wrong.',
     );
   });
 });
