@@ -1,13 +1,17 @@
 import type { Request, Response } from 'express';
 
-import { AppError } from '../../lib/errors.js';
+import { authService } from './auth.service.js';
 
-export function register(_request: Request, _response: Response) {
-  throw new AppError(501, 'Registration is not implemented yet.');
+export async function register(request: Request, response: Response) {
+  const result = await authService.register(request.body);
+
+  response.status(201).json(result);
 }
 
-export function login(_request: Request, _response: Response) {
-  throw new AppError(501, 'Login is not implemented yet.');
+export async function login(request: Request, response: Response) {
+  const result = await authService.login(request.body);
+
+  response.status(200).json(result);
 }
 
 export function me(request: Request, response: Response) {
