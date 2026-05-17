@@ -63,6 +63,7 @@ describe('TaskDetailPage', () => {
     await page.save({ title: '' });
 
     expect(store.createTask).toHaveBeenCalledWith({ title: 'Task' });
+    expect(router.navigate).toHaveBeenCalledWith(['/tasks']);
     expect(router.navigate).toHaveBeenCalledTimes(1);
   });
 });

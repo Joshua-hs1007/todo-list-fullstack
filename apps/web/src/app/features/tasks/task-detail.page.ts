@@ -67,7 +67,7 @@ export class TaskDetailPage implements OnInit {
     const task = id ? await this.store.updateTask(id, input) : await this.store.createTask(input);
 
     if (task) {
-      await this.router.navigate(['/tasks', task.id]);
+      await this.router.navigate(id ? ['/tasks', task.id] : ['/tasks']);
     }
   }
 }
