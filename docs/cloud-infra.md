@@ -26,12 +26,12 @@ Railway PostgreSQL
 
 ### Services
 
-| Layer | Provider | Purpose |
-| --- | --- | --- |
-| Frontend | Vercel | Hosts the Angular web application |
-| Backend | Fly.io | Hosts the Node.js / Express API |
-| Database | Railway | Hosts PostgreSQL |
-| Secrets | Vercel / Fly.io | Stores production environment variables |
+| Layer    | Provider        | Purpose                                 |
+| -------- | --------------- | --------------------------------------- |
+| Frontend | Vercel          | Hosts the Angular web application       |
+| Backend  | Fly.io          | Hosts the Node.js / Express API         |
+| Database | Railway         | Hosts PostgreSQL                        |
+| Secrets  | Vercel / Fly.io | Stores production environment variables |
 
 ---
 
@@ -64,7 +64,7 @@ Use the variable name that matches the frontend codebase.
 ```txt
 Framework Preset: Angular
 Build Command: pnpm web:build
-Output Directory: dist/apps/web/browser
+Output Directory: apps/web/dist/apps/web/browser
 Install Command: pnpm install --frozen-lockfile
 ```
 
@@ -88,13 +88,13 @@ CLIENT_URL="https://your-vercel-app.vercel.app"
 
 ### Environment Variable Details
 
-| Variable | Required | Description |
-| --- | --- | --- |
-| `DATABASE_URL` | Yes | Railway PostgreSQL connection string |
-| `JWT_SECRET` | Yes | Secret used to sign and verify JWT tokens |
-| `NODE_ENV` | Yes | Should be set to `production` |
-| `PORT` | Yes | Port the Express app listens on |
-| `CLIENT_URL` | Yes | Public Vercel frontend URL used for CORS |
+| Variable       | Required | Description                               |
+| -------------- | -------- | ----------------------------------------- |
+| `DATABASE_URL` | Yes      | Railway PostgreSQL connection string      |
+| `JWT_SECRET`   | Yes      | Secret used to sign and verify JWT tokens |
+| `NODE_ENV`     | Yes      | Should be set to `production`             |
+| `PORT`         | Yes      | Port the Express app listens on           |
+| `CLIENT_URL`   | Yes      | Public Vercel frontend URL used for CORS  |
 
 ### Set Fly.io Secrets
 
@@ -243,7 +243,7 @@ app.use(
   cors({
     origin: process.env.CLIENT_URL,
     credentials: true,
-  })
+  }),
 );
 ```
 

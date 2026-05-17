@@ -7,11 +7,13 @@ AGENTS.local.md
 
 # Dependencies and build output
 node_modules/
+.pnpm-store/
 dist/
 coverage/
 .angular/
 playwright-report/
 test-results/
+apps/api/src/generated/prisma/
 
 # Local environment
 .env

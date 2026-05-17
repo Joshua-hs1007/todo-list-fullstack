@@ -14,11 +14,11 @@ export function validateRequest(schemas: RequestSchemas) {
     }
 
     if (schemas.params) {
-      request.params = schemas.params.parse(request.params);
+      request.params = schemas.params.parse(request.params) as Request['params'];
     }
 
     if (schemas.query) {
-      request.query = schemas.query.parse(request.query);
+      request.query = schemas.query.parse(request.query) as Request['query'];
     }
 
     next();

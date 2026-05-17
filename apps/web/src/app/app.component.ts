@@ -1,5 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
+
+import { AuthService } from './core/auth/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -9,8 +11,13 @@ import { RouterLink, RouterOutlet } from '@angular/router';
     <header class="shell-header">
       <a routerLink="/tasks" class="brand">To Do List</a>
       <nav>
-        <a routerLink="/sign-in">Sign in</a>
-        <a routerLink="/register">Register</a>
+        @if (auth.isAuthenticated()) {
+          <a routerLink="/tasks">Tasks</a>
+          <button type="button" (click)="auth.logout()">Sign out</button>
+        } @else {
+          <a routerLink="/login">Sign in</a>
+          <a routerLink="/register">Register</a>
+        }
       </nav>
     </header>
     <main class="shell-main">
@@ -44,12 +51,22 @@ import { RouterLink, RouterOutlet } from '@angular/router';
         text-decoration: none;
       }
 
+      nav button {
+        background: transparent;
+        border: 0;
+        color: #315274;
+        cursor: pointer;
+        padding: 0;
+      }
+
       .shell-main {
         margin: 0 auto;
         max-width: 960px;
         padding: 2rem clamp(1rem, 4vw, 3rem);
       }
-    `
-  ]
+    `,
+  ],
 })
-export class AppComponent {}
+export class AppComponent {
+  readonly auth = inject(AuthService);
+}

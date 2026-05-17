@@ -1,13 +1,18 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
+
+import { getApiErrorMessage } from '../../core/api/api-error';
+import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink],
   template: `
     <section class="auth-page">
       <h1>Sign in</h1>
-      <form [formGroup]="form">
+      <form [formGroup]="form" (ngSubmit)="submit()">
         <label>
           Email
           <input type="email" formControlName="email" autocomplete="email" />
@@ -16,7 +21,13 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
           Password
           <input type="password" formControlName="password" autocomplete="current-password" />
         </label>
-        <button type="submit" [disabled]="form.invalid">Sign in</button>
+        @if (error()) {
+          <p class="error" role="alert">{{ error() }}</p>
+        }
+        <button type="submit" [disabled]="form.invalid || loading()">
+          {{ loading() ? 'Signing in...' : 'Sign in' }}
+        </button>
+        <a routerLink="/register">Create an account</a>
       </form>
     </section>
   `,
@@ -35,14 +46,42 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
         display: grid;
         gap: 0.35rem;
       }
-    `
-  ]
+
+      .error {
+        color: #a4243b;
+        margin: 0;
+      }
+    `,
+  ],
 })
 export class SignInPage {
   private readonly formBuilder = inject(FormBuilder);
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
 
   readonly form = this.formBuilder.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
-    password: ['', Validators.required]
+    password: ['', Validators.required],
   });
+  readonly loading = signal(false);
+  readonly error = signal<string | null>(null);
+
+  async submit() {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
+    this.loading.set(true);
+    this.error.set(null);
+
+    try {
+      await firstValueFrom(this.auth.login(this.form.getRawValue()));
+      await this.router.navigateByUrl('/tasks');
+    } catch (error) {
+      this.error.set(getApiErrorMessage(error));
+    } finally {
+      this.loading.set(false);
+    }
+  }
 }
