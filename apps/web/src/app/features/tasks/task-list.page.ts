@@ -5,6 +5,7 @@ import type { OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import type { ApiTask } from '../../core/api/api-client';
+import { NotificationService } from '../../core/notifications/notification.service';
 import { TaskCardComponent } from './task-card.component';
 import { TaskSearchComponent } from './task-search.component';
 import { TaskStore } from './task.store';
@@ -216,6 +217,7 @@ import type { TaskStatusFilter } from './task.store';
 })
 export class TaskListPage implements OnInit {
   readonly store = inject(TaskStore);
+  private readonly notifications = inject(NotificationService);
   readonly totalTasks = computed(() => this.store.tasks().length);
   readonly inProgressTasks = computed(
     () => this.store.tasks().filter((task) => task.status === 'IN_PROGRESS').length,
@@ -239,7 +241,11 @@ export class TaskListPage implements OnInit {
     void this.store.reorderTasks(tasks);
   }
 
-  deleteTask(id: string) {
-    void this.store.deleteTask(id);
+  async deleteTask(id: string) {
+    const deleted = await this.store.deleteTask(id);
+
+    if (deleted) {
+      this.notifications.showSuccess('Task deleted.');
+    }
   }
 }

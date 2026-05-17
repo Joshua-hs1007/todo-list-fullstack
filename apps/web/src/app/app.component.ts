@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
 import { AuthService } from './core/auth/auth.service';
+import { NotificationService } from './core/notifications/notification.service';
 
 @Component({
   selector: 'app-root',
@@ -26,6 +27,15 @@ import { AuthService } from './core/auth/auth.service';
     <main class="shell-main">
       <router-outlet />
     </main>
+
+    @if (notifications.notification(); as notification) {
+      <aside class="toast" role="status" aria-live="polite">
+        <span>{{ notification.message }}</span>
+        <button type="button" (click)="notifications.dismiss()" aria-label="Dismiss notification">
+          Dismiss
+        </button>
+      </aside>
+    }
   `,
   styles: [
     `
@@ -99,6 +109,31 @@ import { AuthService } from './core/auth/auth.service';
         padding: clamp(1.25rem, 3vw, 2.5rem) clamp(1rem, 4vw, 3rem) 3rem;
       }
 
+      .toast {
+        align-items: center;
+        background: var(--success);
+        border-radius: 8px;
+        bottom: 1rem;
+        box-shadow: var(--shadow-md);
+        color: #ffffff;
+        display: flex;
+        gap: 1rem;
+        justify-content: space-between;
+        max-width: min(420px, calc(100vw - 2rem));
+        padding: 0.85rem 1rem;
+        position: fixed;
+        right: 1rem;
+        z-index: 20;
+      }
+
+      .toast button {
+        background: rgb(255 255 255 / 14%);
+        border: 1px solid rgb(255 255 255 / 35%);
+        color: #ffffff;
+        font-weight: 700;
+        padding: 0.35rem 0.55rem;
+      }
+
       @media (max-width: 520px) {
         .shell-header {
           align-items: flex-start;
@@ -109,10 +144,17 @@ import { AuthService } from './core/auth/auth.service';
         nav {
           width: 100%;
         }
+
+        .toast {
+          bottom: 0.75rem;
+          left: 0.75rem;
+          right: 0.75rem;
+        }
       }
     `,
   ],
 })
 export class AppComponent {
   readonly auth = inject(AuthService);
+  readonly notifications = inject(NotificationService);
 }

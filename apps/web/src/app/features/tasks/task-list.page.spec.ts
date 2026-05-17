@@ -3,6 +3,7 @@ import type { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { ApiTask } from '../../core/api/api-client';
+import { NotificationService } from '../../core/notifications/notification.service';
 import { TaskListPage } from './task-list.page';
 import { TaskStore } from './task.store';
 
@@ -25,7 +26,10 @@ describe('TaskListPage', () => {
       deleteTask: vi.fn(),
     };
     const injector = Injector.create({
-      providers: [{ provide: TaskStore, useValue: store }],
+      providers: [
+        { provide: TaskStore, useValue: store },
+        { provide: NotificationService, useValue: { showSuccess: vi.fn() } },
+      ],
     });
     const page = runInInjectionContext(injector, () => new TaskListPage());
 
@@ -36,7 +40,7 @@ describe('TaskListPage', () => {
     expect(store.setQuery).toHaveBeenCalledWith({ search: 'invoice', status: 'DONE' });
   });
 
-  it('passes reordered and deleted tasks to the store', () => {
+  it('passes reordered and deleted tasks to the store', async () => {
     const first = task('task-1');
     const second = task('task-2');
     const store = {
@@ -46,17 +50,22 @@ describe('TaskListPage', () => {
       loadTasks: vi.fn(),
       setQuery: vi.fn(),
       reorderTasks: vi.fn(),
-      deleteTask: vi.fn(),
+      deleteTask: vi.fn().mockResolvedValue(true),
     };
+    const notifications = { showSuccess: vi.fn() };
     const injector = Injector.create({
-      providers: [{ provide: TaskStore, useValue: store }],
+      providers: [
+        { provide: TaskStore, useValue: store },
+        { provide: NotificationService, useValue: notifications },
+      ],
     });
     const page = runInInjectionContext(injector, () => new TaskListPage());
 
     page.drop({ previousIndex: 0, currentIndex: 1 } as CdkDragDrop<ApiTask[]>);
-    page.deleteTask('task-1');
+    await page.deleteTask('task-1');
 
     expect(store.reorderTasks).toHaveBeenCalledWith([second, first]);
     expect(store.deleteTask).toHaveBeenCalledWith('task-1');
+    expect(notifications.showSuccess).toHaveBeenCalledWith('Task deleted.');
   });
 });

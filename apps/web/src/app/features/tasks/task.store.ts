@@ -106,12 +106,14 @@ export class TaskStore {
         tasks: state.tasks.filter((task) => task.id !== id),
         saving: false,
       }));
+      return true;
     } catch (error) {
       this.state.update((state) => ({
         ...state,
         saving: false,
         error: getApiErrorMessage(error),
       }));
+      return false;
     }
   }
 

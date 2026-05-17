@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TaskFormComponent } from './task-form.component';
 import { TaskStore } from './task.store';
 import type { TaskSaveInput } from '../../core/api/api-client';
+import { NotificationService } from '../../core/notifications/notification.service';
 
 @Component({
   standalone: true,
@@ -92,6 +93,7 @@ import type { TaskSaveInput } from '../../core/api/api-client';
 export class TaskDetailPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly notifications = inject(NotificationService);
   readonly store = inject(TaskStore);
   readonly isNew = computed(() => this.route.snapshot.paramMap.get('id') === null);
 
@@ -110,7 +112,8 @@ export class TaskDetailPage implements OnInit {
     const task = id ? await this.store.updateTask(id, input) : await this.store.createTask(input);
 
     if (task) {
-      await this.router.navigate(id ? ['/tasks', task.id] : ['/tasks']);
+      this.notifications.showSuccess(id ? 'Task updated.' : 'Task created.');
+      await this.router.navigate(['/tasks']);
     }
   }
 }

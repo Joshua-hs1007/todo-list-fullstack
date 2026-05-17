@@ -119,7 +119,7 @@ describe('TaskStore', () => {
     api.deleteTask.mockReturnValue(of({ id: 'task-1' }));
 
     await store.loadTasks();
-    await store.deleteTask('task-1');
+    await expect(store.deleteTask('task-1')).resolves.toBe(true);
 
     expect(api.deleteTask).toHaveBeenCalledWith('task-1');
     expect(store.tasks().map((item) => item.id)).toEqual(['task-2']);
@@ -139,7 +139,7 @@ describe('TaskStore', () => {
     );
 
     await store.loadTasks();
-    await store.deleteTask('task-1');
+    await expect(store.deleteTask('task-1')).resolves.toBe(false);
 
     expect(store.tasks()).toEqual(tasks);
     expect(store.error()).toBe('Forbidden');
