@@ -1,4 +1,4 @@
-app = "todo-list-api"
+app = "todo-list-api-may17"
 primary_region = "ord"
 
 [build]
