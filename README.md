@@ -186,10 +186,10 @@ pnpm api:build
 3. Create the Fly app from the repository root:
 
 ```bash
-fly apps create todo-api
+fly apps create todo-list-api
 ```
 
-Use a unique app name if `todo-api` is unavailable, then update the `app` value in `fly.toml`.
+Use a unique app name if `todo-list-api` is unavailable, then update the `app` value in `fly.toml`.
 
 The repository includes the backend deployment files:
 
