@@ -1,4 +1,5 @@
 import { jest } from '@jest/globals';
+import { Prisma } from '../src/generated/prisma/index.js';
 
 import { hashPassword } from '../src/lib/password.js';
 import type { AppError } from '../src/lib/errors.js';
@@ -64,5 +65,62 @@ describe('authService', () => {
       statusCode: 401,
       code: 'INVALID_CREDENTIALS',
     });
+  });
+
+  it('rejects an incorrect password without revealing which credential failed', async () => {
+    const passwordHash = await hashPassword('password123');
+    const service = createAuthService({
+      user: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'user-1',
+          email: 'user@example.com',
+          passwordHash,
+        }),
+      },
+    } as unknown as AuthDatabase);
+
+    await expect(
+      service.login({
+        email: 'user@example.com',
+        password: 'wrong-password',
+      }),
+    ).rejects.toMatchObject<AppError>({
+      statusCode: 401,
+      code: 'INVALID_CREDENTIALS',
+    });
+  });
+
+  it('maps duplicate email errors to a safe application error', async () => {
+    const uniqueError = new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+      code: 'P2002',
+      clientVersion: 'test',
+    });
+    const service = createAuthService({
+      user: { create: jest.fn().mockRejectedValue(uniqueError) },
+    } as unknown as AuthDatabase);
+
+    await expect(
+      service.register({
+        email: 'user@example.com',
+        password: 'password123',
+      }),
+    ).rejects.toMatchObject<AppError>({
+      statusCode: 400,
+      code: 'EMAIL_ALREADY_REGISTERED',
+    });
+  });
+
+  it('rethrows unexpected registration failures', async () => {
+    const error = new Error('database unavailable');
+    const service = createAuthService({
+      user: { create: jest.fn().mockRejectedValue(error) },
+    } as unknown as AuthDatabase);
+
+    await expect(
+      service.register({
+        email: 'user@example.com',
+        password: 'password123',
+      }),
+    ).rejects.toBe(error);
   });
 });
