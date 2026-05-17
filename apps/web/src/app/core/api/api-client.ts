@@ -1,7 +1,9 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 
-const apiUrl = '/api';
+import { environment } from '../../../environments/environment';
+
+const apiUrl = environment.apiUrl;
 
 export interface ApiUser {
   id: string;
