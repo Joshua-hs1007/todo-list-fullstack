@@ -6,7 +6,7 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc -p tsconfig.json",
+    "build": "prisma generate && tsc -p tsconfig.json && node -e \"require('node:fs').cpSync('src/generated', 'dist/generated', { recursive: true, force: true })\"",
     "start": "node dist/server.js",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit -p tsconfig.json",

@@ -34,7 +34,7 @@ COPY apps/web/package.json apps/web/package.json
 RUN pnpm install --frozen-lockfile --prod --filter @todo/api...
 
 COPY --from=build /app/apps/api/dist apps/api/dist
-COPY --from=build /app/apps/api/src/generated/prisma apps/api/src/generated/prisma
+COPY --from=build /app/apps/api/src/generated/prisma apps/api/dist/generated/prisma
 COPY --from=build /app/apps/api/prisma apps/api/prisma
 
 EXPOSE 3000
