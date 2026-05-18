@@ -258,6 +258,13 @@ Reorder payload:
 Browser -> Vercel Angular frontend -> Fly.io Express API -> Railway PostgreSQL
 ```
 
+Live deployment:
+
+```txt
+Frontend: https://todo-list-fullstack-web.vercel.app/
+Backend:  https://todo-list-api-may17.fly.dev/health
+```
+
 See `docs/cloud-infra.md` for the longer deployment checklist.
 
 ### Railway PostgreSQL
@@ -279,7 +286,7 @@ DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE"
 JWT_SECRET="replace-with-secure-production-secret"
 NODE_ENV="production"
 PORT="3000"
-CLIENT_URL="https://your-vercel-app.vercel.app"
+CLIENT_URL="https://todo-list-fullstack-web.vercel.app"
 ```
 
 Deploy from a Mac:
@@ -293,7 +300,7 @@ fly secrets set DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE"
 fly secrets set JWT_SECRET="replace-with-secure-production-secret"
 fly secrets set NODE_ENV="production"
 fly secrets set PORT="3000"
-fly secrets set CLIENT_URL="https://your-vercel-app.vercel.app"
+fly secrets set CLIENT_URL="https://todo-list-fullstack-web.vercel.app"
 fly deploy
 ```
 
@@ -306,8 +313,8 @@ fly scale count 2
 Verify:
 
 ```txt
-https://your-fly-api.fly.dev/health
-https://your-fly-api.fly.dev/api/docs
+https://todo-list-api-may17.fly.dev/health
+https://todo-list-api-may17.fly.dev/api/docs
 ```
 
 ### Vercel Frontend
@@ -321,7 +328,7 @@ apps/web/src/environments/environment.prod.ts
 Example:
 
 ```ts
-apiUrl: 'https://your-fly-api.fly.dev/api'
+apiUrl: 'https://todo-list-api-may17.fly.dev/api'
 ```
 
 Recommended Vercel settings:
