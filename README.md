@@ -1,53 +1,45 @@
 # To Do List Challenge
 
-Full-stack To Do List application implemented as a pnpm workspace with an Angular web app, Express TypeScript API, Prisma, PostgreSQL, and automated test entry points.
+Full-stack To Do List application built as a pnpm workspace with an Angular frontend, an Express TypeScript API, Prisma ORM, PostgreSQL, JWT authentication, and automated backend, frontend, and Playwright E2E tests.
 
-Production is intended to run on distributed cloud infrastructure:
+The app supports user registration, login, authenticated per-user task CRUD, search, status filtering, task detail editing, drag-and-drop reordering, validation, error handling, and responsive UI states.
 
-- Frontend: Vercel
-- Backend API: Fly.io
-- Database: Railway PostgreSQL
+## Stack
 
-## Assignment Summary
+| Area | Technology |
+| --- | --- |
+| Frontend | Angular 21, TypeScript, standalone components, Angular Router, Reactive Forms, Signals, Angular CDK Drag and Drop |
+| Backend | Node.js, Express 5, TypeScript, Prisma 7, PostgreSQL, JWT, bcryptjs, Zod |
+| Testing | Jest, Supertest, Vitest, Playwright |
+| Tooling | pnpm workspace, Docker Compose, ESLint, Prettier |
+| Planned cloud target | Vercel frontend, Fly.io API, Railway PostgreSQL |
 
-The application lets users register, log in, and manage their own tasks through a responsive web client backed by a REST API. Tasks support create, read, update, delete, search, status filtering, and drag-and-drop reordering.
+## Features
 
-## Approach
+- Register, login, logout, and `/api/auth/me`
+- Password hashing and JWT bearer authentication
+- Protected task routes and Angular auth guard
+- Per-user task ownership enforcement on read, update, delete, and reorder
+- Task create, read, update, delete, search, status filter, and detail editing
+- Transactional task reordering through `PATCH /api/tasks/reorder`
+- Responsive Angular screens for auth, task list, task detail, forms, task cards, search/filter controls, and delete confirmation
+- Loading, empty, error, and success notification states
+- OpenAPI JSON and Swagger UI for the API
+- Backend service/controller/schema/middleware tests
+- Frontend service/guard/interceptor/form/store/component tests
+- Mocked Playwright happy path covering register, create, edit, search, reorder, and delete
 
-The backend keeps routes, controllers, services, schemas, middleware, and shared infrastructure separate. Zod validates requests, JWT middleware protects task routes, Prisma owns persistence, and task services enforce per-user ownership.
-
-The frontend uses Angular standalone components, Router, Reactive Forms, Signals, an HTTP interceptor for bearer tokens, and Angular CDK drag-and-drop for task ordering.
-
-## Completed Features
-
-- User registration and login with hashed passwords
-- JWT authentication and `/api/auth/me`
-- Authenticated task CRUD
-- Per-user task ownership checks
-- Server-side task search and status filtering
-- Transactional task reordering
-- OpenAPI JSON and Swagger UI endpoints
-- Responsive Angular auth, list, and detail screens
-- Loading, empty, and error UI states
-- Backend service/schema tests, frontend utility tests, and a mocked Playwright happy-path flow
-
-## Stable Version Baseline
-
-- Node.js: LTS-compatible `>=22.13 <25`
-- pnpm: `11.1.2`
-- Angular: `21.2.11`
-- TypeScript: `5.9.3` for Angular 21 compatibility
-- Express: `5.2.1`
-- Prisma: `7.8.0`
-- PostgreSQL: `16-alpine` for local Docker development
-
-## Project Structure
+## Repository Layout
 
 ```txt
 apps/
   api/
     prisma/
+      schema.prisma
+      migrations/
     src/
+      app.ts
+      server.ts
       config/
       docs/
       lib/
@@ -55,7 +47,6 @@ apps/
       modules/
         auth/
         tasks/
-      types/
     tests/
   web/
     src/
@@ -63,29 +54,143 @@ apps/
         core/
         features/
         shared/
+      environments/
     tests/
       e2e/
 docs/
 scripts/
+docker-compose.yml
+pnpm-workspace.yaml
+```
+
+## Requirements
+
+- Node.js `>=22.13 <25`
+- pnpm `>=11 <12`
+- Docker Desktop, if running PostgreSQL locally
+- Playwright browsers for E2E tests
+
+This repo is pinned to pnpm `11.1.2` in `package.json`.
+
+## Environment
+
+Copy `.env.example` to `.env` before running the API:
+
+```env
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/todo_app"
+JWT_SECRET="replace-with-a-secure-local-secret"
+NODE_ENV="development"
+PORT=3000
+CLIENT_URL="http://localhost:4200"
+NG_APP_API_URL="http://localhost:3000/api"
+```
+
+Do not commit real secrets. The Angular app currently reads its API URL from:
+
+```txt
+apps/web/src/environments/environment.ts
+apps/web/src/environments/environment.prod.ts
 ```
 
 ## Local Setup
 
-Install dependencies after reviewing the manifests:
+Install dependencies:
 
 ```bash
 pnpm install
 ```
 
-Copy `.env.example` to `.env` and set local values before running the API.
+Start PostgreSQL:
 
-Generate the Prisma client after installing dependencies:
+```bash
+docker compose up -d postgres
+```
+
+Generate the Prisma client:
 
 ```bash
 pnpm db:generate
 ```
 
-Run verification from the repository root:
+Run local migrations:
+
+```bash
+pnpm db:migrate
+```
+
+Start the API and web app in separate terminals:
+
+```bash
+pnpm api:dev
+pnpm web:dev
+```
+
+Open the app at:
+
+```txt
+http://localhost:4200
+```
+
+The API runs at:
+
+```txt
+http://localhost:3000
+```
+
+## API
+
+Auth routes:
+
+```txt
+POST   /api/auth/register
+POST   /api/auth/login
+GET    /api/auth/me
+```
+
+Task routes:
+
+```txt
+GET    /api/tasks?search=&status=
+POST   /api/tasks
+GET    /api/tasks/:id
+PATCH  /api/tasks/:id
+DELETE /api/tasks/:id
+PATCH  /api/tasks/reorder
+```
+
+Reorder payload:
+
+```json
+{
+  "orderedTaskIds": ["task_1", "task_2", "task_3"]
+}
+```
+
+API docs are available after starting the API:
+
+```txt
+http://localhost:3000/api/docs
+http://localhost:3000/api/openapi.json
+```
+
+## Database Model
+
+Prisma defines:
+
+- `User`: `id`, `email`, `passwordHash`, timestamps, relation to tasks
+- `Task`: `id`, `userId`, `title`, `description`, `status`, `dueDate`, `position`, timestamps
+- `TaskStatus`: `TODO`, `IN_PROGRESS`, `DONE`
+
+The schema indexes per-user ordering and status filtering:
+
+```prisma
+@@index([userId, position])
+@@index([userId, status])
+```
+
+## Commands
+
+On macOS, use the wrapper scripts from the repository root:
 
 ```bash
 ./scripts/lint.sh
@@ -93,59 +198,100 @@ Run verification from the repository root:
 ./scripts/test.sh
 ```
 
-Run development servers:
+Equivalent package scripts:
 
 ```bash
-pnpm api:dev
-pnpm web:dev
-```
-
-Build production artifacts:
-
-```bash
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm api:test
+pnpm web:test
+pnpm test:e2e
 pnpm api:build
 pnpm web:build
-```
-
-The Angular production output is written to `apps/web/dist/apps/web/browser`.
-
-Database commands are available but should only be run when you intentionally want to use the local database:
-
-```bash
 pnpm db:generate
 pnpm db:migrate
 pnpm db:migrate:deploy
 ```
 
-## Cloud Deployment
+## Testing
 
-The planned production topology is:
+Backend tests live under:
+
+```txt
+apps/api/tests/
+```
+
+They cover auth services, task services, schemas, middleware, controllers, and app routes.
+
+Frontend unit tests live beside Angular source files under:
+
+```txt
+apps/web/src/app/**/*.spec.ts
+```
+
+They cover API clients, auth service, auth guard, auth interceptor, notifications, auth pages, task store, list/detail pages, task form, task card, and search controls.
+
+The Playwright E2E test lives at:
+
+```txt
+apps/web/tests/e2e/todo.spec.ts
+```
+
+The current E2E test uses mocked API routes and verifies the full UI flow:
+
+```txt
+register -> task list -> create task -> edit task -> search task -> reorder task -> delete task
+```
+
+Install Playwright browsers if needed:
+
+```bash
+pnpm exec playwright install
+```
+
+Latest local verification performed in this workspace:
+
+```txt
+pnpm lint       passed
+pnpm typecheck  passed
+pnpm web:test   passed, 14 files and 50 tests
+pnpm test:e2e   passed, 1 Playwright test
+```
+
+## Build
+
+Build the backend:
+
+```bash
+pnpm api:build
+```
+
+Build the frontend:
+
+```bash
+pnpm web:build
+```
+
+Angular production output is written to:
+
+```txt
+apps/web/dist/apps/web/browser
+```
+
+## Deployment Notes
+
+The intended production topology is:
 
 ```txt
 Browser -> Vercel Angular frontend -> Fly.io Express API -> Railway PostgreSQL
 ```
 
-Use `docs/cloud-infra.md` for the longer deployment checklist. The short setup is below.
+See `docs/cloud-infra.md` for the full cloud checklist.
 
-### Railway PostgreSQL
+### Fly.io API
 
-Create a Railway PostgreSQL database and copy its public `DATABASE_URL`.
-
-The Fly.io backend uses that value as its Prisma connection string:
-
-```env
-DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE"
-```
-
-Run production migrations against Railway after the backend environment is configured:
-
-```bash
-pnpm db:migrate:deploy
-```
-
-### Fly.io Backend
-
-Deploy `apps/api` as the Node/Express API. Required Fly.io secrets:
+Required API environment variables:
 
 ```env
 DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE"
@@ -155,90 +301,28 @@ PORT="3000"
 CLIENT_URL="https://your-vercel-app.vercel.app"
 ```
 
-Set them with:
-
-```bash
-fly secrets set DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE"
-fly secrets set JWT_SECRET="replace-with-secure-production-secret"
-fly secrets set NODE_ENV="production"
-fly secrets set PORT="3000"
-fly secrets set CLIENT_URL="https://your-vercel-app.vercel.app"
-```
-
-`CLIENT_URL` must match the deployed Vercel URL so CORS allows browser requests.
-
-Current backend deployment steps:
-
-1. Install and authenticate the Fly CLI:
-
-```bash
-fly auth login
-```
-
-2. Build the API locally before deploying:
+Deploy flow:
 
 ```bash
 pnpm install
 pnpm db:generate
 pnpm api:build
-```
-
-3. Create the Fly app from the repository root:
-
-```bash
 fly apps create todo-list-api
-```
-
-Use a unique app name if `todo-list-api` is unavailable, then update the `app` value in `fly.toml`.
-
-The repository includes the backend deployment files:
-
-- `fly.toml` should expose internal port `3000`.
-- `Dockerfile` installs workspace dependencies, generates Prisma, builds `@todo/api`, and starts the compiled API.
-- `.dockerignore` keeps local dependencies, build output, logs, and secrets out of the Docker build context.
-
-The app start command must resolve to:
-
-```bash
-pnpm --filter @todo/api start
-```
-
-4. Set production secrets on the Fly app:
-
-```bash
 fly secrets set DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE"
 fly secrets set JWT_SECRET="replace-with-secure-production-secret"
 fly secrets set NODE_ENV="production"
 fly secrets set PORT="3000"
 fly secrets set CLIENT_URL="https://your-vercel-app.vercel.app"
-```
-
-5. Deploy the backend:
-
-```bash
 fly deploy
 ```
 
-6. Run Railway database migrations from your local machine with the production `DATABASE_URL`:
+Run production migrations against Railway:
 
 ```bash
 DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE" pnpm db:migrate:deploy
 ```
 
-On Windows PowerShell:
-
-```powershell
-$env:DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE"
-pnpm.cmd db:migrate:deploy
-```
-
-7. Check logs if the app does not start:
-
-```bash
-fly logs
-```
-
-After deployment, verify:
+Verify:
 
 ```txt
 https://your-fly-api.fly.dev/health
@@ -247,9 +331,7 @@ https://your-fly-api.fly.dev/api/docs
 
 ### Vercel Frontend
 
-Deploy the Angular app to Vercel.
-
-Recommended Vercel settings:
+Recommended settings:
 
 ```txt
 Framework Preset: Angular
@@ -258,44 +340,26 @@ Build Command: pnpm web:build
 Output Directory: apps/web/dist/apps/web/browser
 ```
 
-The frontend API base URL is configured in:
+Before deploying, set the production API URL in:
 
 ```txt
-apps/web/src/environments/environment.ts
 apps/web/src/environments/environment.prod.ts
 ```
 
-For production, set the API URL to the Fly.io API origin plus `/api`:
+Example:
 
 ```ts
 apiUrl: 'https://your-fly-api.fly.dev/api'
 ```
 
-If the production URL changes, update the frontend environment before rebuilding and redeploying to Vercel.
+## Documentation
 
-### Production Verification
+- `docs/architecture.md`: architecture, boundaries, data model, and API design
+- `docs/testing.md`: test strategy, recommended coverage, E2E expectations, and QA checklist
+- `docs/cloud-infra.md`: Vercel, Fly.io, and Railway deployment checklist
 
-After all services are deployed:
+## Known Follow-Up Work
 
-1. Open the Vercel frontend.
-2. Confirm the Fly.io `/health` endpoint returns `{ "status": "ok" }`.
-3. Confirm Prisma migrations have run against Railway.
-4. Register a user.
-5. Log in.
-6. Create, edit, search, reorder, and delete a task.
-
-## API Docs
-
-After starting the API, open:
-
-```txt
-http://localhost:3000/api/docs
-http://localhost:3000/api/openapi.json
-```
-
-## Given More Time
-
-- Add full API integration tests against an isolated PostgreSQL test database.
-- Add Angular component tests for forms, guard behavior, and task interactions.
-- Add CI automation for lint, typecheck, tests, migrations, and cloud deploys.
-- Add refresh tokens or short-lived access-token rotation for stronger auth hardening.
+- Add CI to run lint, typecheck, backend tests, frontend tests, Playwright E2E, and migrations.
+- Enforce coverage thresholds in CI.
+- Add production hardening such as rate limiting, token rotation or refresh tokens, monitoring, and structured logs.
