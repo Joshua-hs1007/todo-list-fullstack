@@ -21,6 +21,7 @@ COPY apps/api apps/api
 
 RUN pnpm --filter @todo/api db:generate
 RUN pnpm --filter @todo/api build
+RUN test -f apps/api/dist/generated/prisma/index.js
 
 FROM base AS runner
 
@@ -36,6 +37,8 @@ RUN pnpm install --frozen-lockfile --prod --filter @todo/api...
 COPY --from=build /app/apps/api/dist apps/api/dist
 COPY --from=build /app/apps/api/src/generated/prisma apps/api/dist/generated/prisma
 COPY --from=build /app/apps/api/prisma apps/api/prisma
+
+RUN test -f apps/api/dist/generated/prisma/index.js
 
 EXPOSE 3000
 
