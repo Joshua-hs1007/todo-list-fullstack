@@ -54,6 +54,17 @@ describe('TaskStore', () => {
     expect(store.error()).toBeNull();
   });
 
+  it('applies optimistic task state without calling the API', () => {
+    const tasks = [task({ id: 'task-2', status: 'DONE' })];
+
+    store.setOptimisticTasks(tasks);
+
+    expect(store.tasks()).toEqual(tasks);
+    expect(store.error()).toBeNull();
+    expect(api.listTasks).not.toHaveBeenCalled();
+    expect(api.reorderTasks).not.toHaveBeenCalled();
+  });
+
   it('exposes load task errors', async () => {
     api.listTasks.mockReturnValue(
       throwError(

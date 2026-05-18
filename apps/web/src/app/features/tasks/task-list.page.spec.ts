@@ -22,6 +22,7 @@ const setup = (tasks: ApiTask[] = [], deleteTask = vi.fn().mockResolvedValue(tru
     saving: signal(false),
     loadTasks: vi.fn(),
     setQuery: vi.fn(),
+    setOptimisticTasks: vi.fn(),
     reorderTasks: vi.fn(),
     updateTask: vi.fn().mockResolvedValue(task('updated-task')),
     deleteTask,
@@ -46,6 +47,7 @@ describe('TaskListPage', () => {
       loading: signal(false),
       loadTasks: vi.fn(),
       setQuery: vi.fn(),
+      setOptimisticTasks: vi.fn(),
       reorderTasks: vi.fn(),
       updateTask: vi.fn(),
       deleteTask: vi.fn(),
@@ -91,6 +93,7 @@ describe('TaskListPage', () => {
       loading: signal(false),
       loadTasks: vi.fn(),
       setQuery: vi.fn(),
+      setOptimisticTasks: vi.fn(),
       reorderTasks: vi.fn(),
       updateTask: vi.fn(),
       deleteTask: vi.fn().mockResolvedValue(true),
@@ -115,6 +118,7 @@ describe('TaskListPage', () => {
     page.requestDelete('task-1');
 
     expect(store.reorderTasks).toHaveBeenCalledWith([second, first]);
+    expect(store.setOptimisticTasks).toHaveBeenCalledWith([second, first]);
     expect(store.updateTask).not.toHaveBeenCalled();
     expect(page.pendingDeleteTask()).toEqual(first);
     expect(store.deleteTask).not.toHaveBeenCalled();
@@ -145,6 +149,10 @@ describe('TaskListPage', () => {
       inProgress,
       { ...todo, status: 'IN_PROGRESS' },
     ]);
+    expect(store.setOptimisticTasks).toHaveBeenCalledWith([
+      inProgress,
+      { ...todo, status: 'IN_PROGRESS' },
+    ]);
   });
 
   it('reloads tasks without reordering when a cross-column status update fails', async () => {
@@ -167,6 +175,7 @@ describe('TaskListPage', () => {
       dueDate: undefined,
       status: 'DONE',
     });
+    expect(store.setOptimisticTasks).toHaveBeenCalledWith([{ ...todo, status: 'DONE' }]);
     expect(store.loadTasks).toHaveBeenCalledTimes(1);
     expect(store.reorderTasks).not.toHaveBeenCalled();
   });
@@ -180,6 +189,7 @@ describe('TaskListPage', () => {
       saving: signal(false),
       loadTasks: vi.fn(),
       setQuery: vi.fn(),
+      setOptimisticTasks: vi.fn(),
       reorderTasks: vi.fn(),
       updateTask: vi.fn(),
       deleteTask: vi.fn().mockResolvedValue(true),
@@ -210,6 +220,7 @@ describe('TaskListPage', () => {
       saving: signal(false),
       loadTasks: vi.fn(),
       setQuery: vi.fn(),
+      setOptimisticTasks: vi.fn(),
       reorderTasks: vi.fn(),
       updateTask: vi.fn(),
       deleteTask: vi.fn(),

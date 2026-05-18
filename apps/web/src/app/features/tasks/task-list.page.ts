@@ -467,7 +467,12 @@ export class TaskListPage implements OnInit {
         0,
         event.currentIndex,
       );
+    }
 
+    const nextTasks = this.flattenColumns(columns);
+    this.store.setOptimisticTasks(nextTasks);
+
+    if (task.status !== targetStatus) {
       const updated = await this.store.updateTask(
         task.id,
         this.statusUpdateInput(task, targetStatus),
@@ -479,7 +484,7 @@ export class TaskListPage implements OnInit {
       }
     }
 
-    await this.store.reorderTasks(this.flattenColumns(columns));
+    await this.store.reorderTasks(nextTasks);
   }
 
   requestDelete(id: string) {

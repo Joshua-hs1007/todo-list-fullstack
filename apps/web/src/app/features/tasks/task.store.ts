@@ -51,6 +51,10 @@ export class TaskStore {
     }));
   }
 
+  setOptimisticTasks(tasks: ApiTask[]) {
+    this.state.update((state) => ({ ...state, tasks, error: null }));
+  }
+
   async loadTasks() {
     const { search, status } = this.state();
     this.state.update((state) => ({ ...state, loading: true, error: null }));
