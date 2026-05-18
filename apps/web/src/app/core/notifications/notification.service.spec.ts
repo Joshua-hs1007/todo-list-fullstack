@@ -26,4 +26,19 @@ describe('NotificationService', () => {
 
     expect(service.notification()).toBeNull();
   });
+
+  it('replaces the previous auto-dismiss timer when showing a new notification', () => {
+    vi.useFakeTimers();
+    const service = new NotificationService();
+
+    service.showSuccess('First task saved.');
+    vi.advanceTimersByTime(3000);
+    service.showSuccess('Second task saved.');
+    vi.advanceTimersByTime(1499);
+
+    expect(service.notification()).toEqual({ message: 'Second task saved.', tone: 'success' });
+
+    vi.advanceTimersByTime(3001);
+    expect(service.notification()).toBeNull();
+  });
 });

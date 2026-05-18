@@ -70,4 +70,58 @@ describe('authInterceptor', () => {
     expect(auth.logout).toHaveBeenCalled();
     expect(router.navigate).toHaveBeenCalledWith(['/login']);
   });
+
+  it('does not redirect again when unauthorized on the login page', () => {
+    const request = new HttpRequest('GET', '/api/tasks');
+    const auth = { token: signal('token-1'), logout: vi.fn() };
+    const router = { url: '/login', navigate: vi.fn().mockResolvedValue(true) };
+    const next = vi.fn<HttpHandlerFn>().mockReturnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 401,
+            error: { error: { message: 'Unauthorized.' } },
+          }),
+      ),
+    );
+    const injector = Injector.create({
+      providers: [
+        { provide: AuthService, useValue: auth },
+        { provide: Router, useValue: router },
+      ],
+    });
+
+    runInInjectionContext(injector, () => {
+      authInterceptor(request, next).subscribe({ error: () => undefined });
+    });
+
+    expect(auth.logout).toHaveBeenCalled();
+    expect(router.navigate).not.toHaveBeenCalled();
+  });
+
+  it('passes through non-unauthorized errors without logging out', () => {
+    const request = new HttpRequest('GET', '/api/tasks');
+    const auth = { token: signal('token-1'), logout: vi.fn() };
+    const router = { url: '/tasks', navigate: vi.fn().mockResolvedValue(true) };
+    const error = new HttpErrorResponse({
+      status: 500,
+      error: { error: { message: 'Unexpected failure.' } },
+    });
+    const next = vi.fn<HttpHandlerFn>().mockReturnValue(throwError(() => error));
+    const injector = Injector.create({
+      providers: [
+        { provide: AuthService, useValue: auth },
+        { provide: Router, useValue: router },
+      ],
+    });
+    let receivedError: unknown;
+
+    runInInjectionContext(injector, () => {
+      authInterceptor(request, next).subscribe({ error: (caught) => (receivedError = caught) });
+    });
+
+    expect(receivedError).toBe(error);
+    expect(auth.logout).not.toHaveBeenCalled();
+    expect(router.navigate).not.toHaveBeenCalled();
+  });
 });

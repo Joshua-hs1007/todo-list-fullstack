@@ -14,6 +14,29 @@ const task = (id: string): ApiTask => ({
   position: 0,
 });
 
+const setup = (tasks: ApiTask[] = [], deleteTask = vi.fn().mockResolvedValue(true)) => {
+  const store = {
+    tasks: signal<ApiTask[]>(tasks),
+    error: signal<string | null>(null),
+    loading: signal(false),
+    saving: signal(false),
+    loadTasks: vi.fn(),
+    setQuery: vi.fn(),
+    reorderTasks: vi.fn(),
+    deleteTask,
+  };
+  const notifications = { showSuccess: vi.fn() };
+  const injector = Injector.create({
+    providers: [
+      { provide: TaskStore, useValue: store },
+      { provide: NotificationService, useValue: notifications },
+    ],
+  });
+  const page = runInInjectionContext(injector, () => new TaskListPage());
+
+  return { notifications, page, store };
+};
+
 describe('TaskListPage', () => {
   it('loads tasks on init and applies search filters', () => {
     const store = {
@@ -38,6 +61,18 @@ describe('TaskListPage', () => {
 
     expect(store.loadTasks).toHaveBeenCalledTimes(2);
     expect(store.setQuery).toHaveBeenCalledWith({ search: 'invoice', status: 'DONE' });
+  });
+
+  it('computes task summary counts by status', () => {
+    const { page } = setup([
+      task('task-1'),
+      { ...task('task-2'), status: 'IN_PROGRESS' },
+      { ...task('task-3'), status: 'DONE' },
+    ]);
+
+    expect(page.totalTasks()).toBe(3);
+    expect(page.inProgressTasks()).toBe(1);
+    expect(page.doneTasks()).toBe(1);
   });
 
   it('passes reordered tasks to the store and opens delete confirmation', () => {
@@ -124,5 +159,36 @@ describe('TaskListPage', () => {
 
     expect(page.pendingDeleteTask()).toBeNull();
     expect(store.deleteTask).not.toHaveBeenCalled();
+  });
+
+  it('ignores delete requests for unknown tasks', () => {
+    const first = task('task-1');
+    const { page, store } = setup([first]);
+
+    page.requestDelete('missing-task');
+
+    expect(page.pendingDeleteTask()).toBeNull();
+    expect(store.deleteTask).not.toHaveBeenCalled();
+  });
+
+  it('does nothing when confirming without a pending task', async () => {
+    const { notifications, page, store } = setup([task('task-1')]);
+
+    await page.confirmDelete();
+
+    expect(store.deleteTask).not.toHaveBeenCalled();
+    expect(notifications.showSuccess).not.toHaveBeenCalled();
+  });
+
+  it('keeps the confirmation open when delete fails', async () => {
+    const first = task('task-1');
+    const { notifications, page, store } = setup([first], vi.fn().mockResolvedValue(false));
+
+    page.requestDelete('task-1');
+    await page.confirmDelete();
+
+    expect(store.deleteTask).toHaveBeenCalledWith('task-1');
+    expect(page.pendingDeleteTask()).toEqual(first);
+    expect(notifications.showSuccess).not.toHaveBeenCalled();
   });
 });
