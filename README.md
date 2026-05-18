@@ -2,7 +2,50 @@
 
 Full-stack To Do List application built as a pnpm workspace with an Angular frontend, an Express TypeScript API, Prisma ORM, PostgreSQL, JWT authentication, and automated backend, frontend, and Playwright E2E tests.
 
-The app supports user registration, login, authenticated per-user task CRUD, search, status filtering, task detail editing, drag-and-drop reordering, validation, error handling, and responsive UI states.
+## Assignment Summary
+
+The assignment was to build a production-style To Do List application where users can register, log in, and manage only their own tasks. The app supports authenticated task CRUD, search, status filtering, task detail editing, drag-and-drop reordering, validation, error handling, and responsive UI states.
+
+The target architecture is a distributed deployment:
+
+```txt
+Browser -> Vercel Angular frontend -> Fly.io Express API -> Railway PostgreSQL
+```
+
+## Overall Approach
+
+I split the project into a pnpm monorepo with separate `apps/api` and `apps/web` workspaces.
+
+On the backend, Express app setup is separated from server startup. Routes, controllers, services, schemas, middleware, Prisma access, password hashing, JWT handling, and error handling are kept in separate modules. Zod validates request bodies, params, and query strings. Task services enforce per-user ownership, and task reordering is handled with Prisma transactions.
+
+On the frontend, Angular standalone components are organized by feature. Auth and API concerns live in `core`, task UI lives in `features/tasks`, API calls stay in services, local task state is handled with Angular Signals, forms use Reactive Forms, protected routes use an auth guard, and JWT headers are attached by an HTTP interceptor.
+
+Testing is layered: backend Jest/Supertest tests cover service, schema, middleware, controller, and route behavior; frontend Vitest tests cover services, guards, forms, components, and stores; Playwright verifies the main user journey with mocked API responses.
+
+## Completed Features
+
+- User registration, login, logout, and `/api/auth/me`
+- Password hashing with `bcryptjs`
+- JWT bearer authentication
+- Angular auth guard for protected task routes
+- HTTP interceptor for auth headers
+- Authenticated task create, read, update, and delete
+- Per-user task ownership checks for read, update, delete, and reorder
+- Server-side task search by title/description
+- Status filtering by `TODO`, `IN_PROGRESS`, and `DONE`
+- Task detail create/edit page
+- Delete confirmation modal
+- Drag-and-drop task reordering with Angular CDK
+- Transactional reorder endpoint: `PATCH /api/tasks/reorder`
+- Zod request validation
+- Centralized API error handling
+- Prisma schema and migrations for PostgreSQL
+- Responsive Angular auth, list, search/filter, card, and detail screens
+- Loading, empty, error, and success notification states
+- OpenAPI JSON and Swagger UI endpoints
+- Dockerfile and Fly.io config for API deployment
+- Docker Compose PostgreSQL for local development
+- Backend tests, frontend unit tests, and Playwright E2E happy path
 
 ## Stack
 
@@ -12,22 +55,7 @@ The app supports user registration, login, authenticated per-user task CRUD, sea
 | Backend | Node.js, Express 5, TypeScript, Prisma 7, PostgreSQL, JWT, bcryptjs, Zod |
 | Testing | Jest, Supertest, Vitest, Playwright |
 | Tooling | pnpm workspace, Docker Compose, ESLint, Prettier |
-| Planned cloud target | Vercel frontend, Fly.io API, Railway PostgreSQL |
-
-## Features
-
-- Register, login, logout, and `/api/auth/me`
-- Password hashing and JWT bearer authentication
-- Protected task routes and Angular auth guard
-- Per-user task ownership enforcement on read, update, delete, and reorder
-- Task create, read, update, delete, search, status filter, and detail editing
-- Transactional task reordering through `PATCH /api/tasks/reorder`
-- Responsive Angular screens for auth, task list, task detail, forms, task cards, search/filter controls, and delete confirmation
-- Loading, empty, error, and success notification states
-- OpenAPI JSON and Swagger UI for the API
-- Backend service/controller/schema/middleware tests
-- Frontend service/guard/interceptor/form/store/component tests
-- Mocked Playwright happy path covering register, create, edit, search, reorder, and delete
+| Cloud target | Vercel frontend, Fly.io API, Railway PostgreSQL |
 
 ## Repository Layout
 
@@ -63,18 +91,26 @@ docker-compose.yml
 pnpm-workspace.yaml
 ```
 
-## Requirements
+## Running Locally On Mac
+
+### Requirements
 
 - Node.js `>=22.13 <25`
 - pnpm `>=11 <12`
-- Docker Desktop, if running PostgreSQL locally
-- Playwright browsers for E2E tests
+- Docker Desktop
+- Fly CLI and Vercel CLI only if deploying
 
-This repo is pinned to pnpm `11.1.2` in `package.json`.
+This repo is pinned to pnpm `11.1.2`.
 
-## Environment
+### Environment
 
-Copy `.env.example` to `.env` before running the API:
+Copy `.env.example` to `.env`:
+
+```bash
+cp .env.example .env
+```
+
+Expected local values:
 
 ```env
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/todo_app"
@@ -85,14 +121,14 @@ CLIENT_URL="http://localhost:4200"
 NG_APP_API_URL="http://localhost:3000/api"
 ```
 
-Do not commit real secrets. The Angular app currently reads its API URL from:
+Do not commit real secrets. The Angular API URL is configured in:
 
 ```txt
 apps/web/src/environments/environment.ts
 apps/web/src/environments/environment.prod.ts
 ```
 
-## Local Setup
+### Setup
 
 Install dependencies:
 
@@ -106,15 +142,10 @@ Start PostgreSQL:
 docker compose up -d postgres
 ```
 
-Generate the Prisma client:
+Generate Prisma client and run migrations:
 
 ```bash
 pnpm db:generate
-```
-
-Run local migrations:
-
-```bash
 pnpm db:migrate
 ```
 
@@ -125,7 +156,7 @@ pnpm api:dev
 pnpm web:dev
 ```
 
-Open the app at:
+Open:
 
 ```txt
 http://localhost:4200
@@ -137,7 +168,52 @@ The API runs at:
 http://localhost:3000
 ```
 
-## API
+API docs:
+
+```txt
+http://localhost:3000/api/docs
+http://localhost:3000/api/openapi.json
+```
+
+## Verification Commands
+
+Use the wrapper scripts from the repository root:
+
+```bash
+./scripts/lint.sh
+./scripts/typecheck.sh
+./scripts/test.sh
+```
+
+Useful package scripts:
+
+```bash
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm api:test
+pnpm web:test
+pnpm test:e2e
+pnpm api:build
+pnpm web:build
+```
+
+Install Playwright browsers if needed:
+
+```bash
+pnpm exec playwright install
+```
+
+Latest local verification:
+
+```txt
+pnpm lint       passed
+pnpm typecheck  passed
+pnpm web:test   passed, 14 files and 50 tests
+pnpm test:e2e   passed, 1 Playwright test
+```
+
+## API Contract
 
 Auth routes:
 
@@ -166,128 +242,25 @@ Reorder payload:
 }
 ```
 
-API docs are available after starting the API:
+## Deployment Instructions
 
-```txt
-http://localhost:3000/api/docs
-http://localhost:3000/api/openapi.json
-```
-
-## Database Model
-
-Prisma defines:
-
-- `User`: `id`, `email`, `passwordHash`, timestamps, relation to tasks
-- `Task`: `id`, `userId`, `title`, `description`, `status`, `dueDate`, `position`, timestamps
-- `TaskStatus`: `TODO`, `IN_PROGRESS`, `DONE`
-
-The schema indexes per-user ordering and status filtering:
-
-```prisma
-@@index([userId, position])
-@@index([userId, status])
-```
-
-## Commands
-
-On macOS, use the wrapper scripts from the repository root:
-
-```bash
-./scripts/lint.sh
-./scripts/typecheck.sh
-./scripts/test.sh
-```
-
-Equivalent package scripts:
-
-```bash
-pnpm lint
-pnpm typecheck
-pnpm test
-pnpm api:test
-pnpm web:test
-pnpm test:e2e
-pnpm api:build
-pnpm web:build
-pnpm db:generate
-pnpm db:migrate
-pnpm db:migrate:deploy
-```
-
-## Testing
-
-Backend tests live under:
-
-```txt
-apps/api/tests/
-```
-
-They cover auth services, task services, schemas, middleware, controllers, and app routes.
-
-Frontend unit tests live beside Angular source files under:
-
-```txt
-apps/web/src/app/**/*.spec.ts
-```
-
-They cover API clients, auth service, auth guard, auth interceptor, notifications, auth pages, task store, list/detail pages, task form, task card, and search controls.
-
-The Playwright E2E test lives at:
-
-```txt
-apps/web/tests/e2e/todo.spec.ts
-```
-
-The current E2E test uses mocked API routes and verifies the full UI flow:
-
-```txt
-register -> task list -> create task -> edit task -> search task -> reorder task -> delete task
-```
-
-Install Playwright browsers if needed:
-
-```bash
-pnpm exec playwright install
-```
-
-Latest local verification performed in this workspace:
-
-```txt
-pnpm lint       passed
-pnpm typecheck  passed
-pnpm web:test   passed, 14 files and 50 tests
-pnpm test:e2e   passed, 1 Playwright test
-```
-
-## Build
-
-Build the backend:
-
-```bash
-pnpm api:build
-```
-
-Build the frontend:
-
-```bash
-pnpm web:build
-```
-
-Angular production output is written to:
-
-```txt
-apps/web/dist/apps/web/browser
-```
-
-## Deployment Notes
-
-The intended production topology is:
+### Production Topology
 
 ```txt
 Browser -> Vercel Angular frontend -> Fly.io Express API -> Railway PostgreSQL
 ```
 
-See `docs/cloud-infra.md` for the full cloud checklist.
+See `docs/cloud-infra.md` for the longer deployment checklist.
+
+### Railway PostgreSQL
+
+Create a Railway PostgreSQL database and copy the production `DATABASE_URL`.
+
+Run production migrations after the API environment is configured:
+
+```bash
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE" pnpm db:migrate:deploy
+```
 
 ### Fly.io API
 
@@ -301,11 +274,11 @@ PORT="3000"
 CLIENT_URL="https://your-vercel-app.vercel.app"
 ```
 
-Deploy flow:
+Deploy from a Mac:
 
 ```bash
+fly auth login
 pnpm install
-pnpm db:generate
 pnpm api:build
 fly apps create todo-list-api
 fly secrets set DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE"
@@ -316,10 +289,10 @@ fly secrets set CLIENT_URL="https://your-vercel-app.vercel.app"
 fly deploy
 ```
 
-Run production migrations against Railway:
+If you want two Fly machines for availability after the app is healthy:
 
 ```bash
-DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE" pnpm db:migrate:deploy
+fly scale count 2
 ```
 
 Verify:
@@ -330,15 +303,6 @@ https://your-fly-api.fly.dev/api/docs
 ```
 
 ### Vercel Frontend
-
-Recommended settings:
-
-```txt
-Framework Preset: Angular
-Install Command: pnpm install --frozen-lockfile
-Build Command: pnpm web:build
-Output Directory: apps/web/dist/apps/web/browser
-```
 
 Before deploying, set the production API URL in:
 
@@ -352,14 +316,43 @@ Example:
 apiUrl: 'https://your-fly-api.fly.dev/api'
 ```
 
+Recommended Vercel settings:
+
+```txt
+Framework Preset: Angular
+Install Command: pnpm install --frozen-lockfile
+Build Command: pnpm web:build
+Output Directory: apps/web/dist/apps/web/browser
+```
+
+After deployment, open the Vercel frontend and verify:
+
+```txt
+register -> login -> create task -> edit task -> search task -> reorder task -> delete task
+```
+
+## Given More Time: Product Features
+
+- Task due-date reminders and overdue indicators: about 4-6 hours.
+- Pagination or infinite scroll for large task lists: about 4-6 hours.
+- Keyboard-accessible reorder controls in addition to drag-and-drop: about 4-8 hours.
+- Task priority, labels, or projects: about 1-2 days depending on UI depth.
+- Account settings and password reset flow: about 1-2 days.
+- Better empty-state onboarding and optional sample tasks: about 2-4 hours.
+
+## Given More Time: Robustness
+
+- Add CI for lint, typecheck, backend tests, frontend tests, Playwright E2E, Docker build, and Prisma migration checks: about 4-8 hours.
+- Enforce backend and frontend coverage thresholds in CI: about 2-4 hours.
+- Add full API integration tests against an isolated PostgreSQL test database: about 1 day.
+- Add production rate limiting, request logging, and structured logs: about 4-6 hours.
+- Add refresh tokens or short-lived access-token rotation: about 1 day.
+- Add monitoring, uptime checks, and error reporting for Fly.io and Vercel: about 4-6 hours.
+- Add database backup/restore runbook for Railway: about 2-4 hours.
+- Add accessibility audit and fixes with keyboard and screen-reader testing: about 1 day.
+
 ## Documentation
 
 - `docs/architecture.md`: architecture, boundaries, data model, and API design
 - `docs/testing.md`: test strategy, recommended coverage, E2E expectations, and QA checklist
 - `docs/cloud-infra.md`: Vercel, Fly.io, and Railway deployment checklist
-
-## Known Follow-Up Work
-
-- Add CI to run lint, typecheck, backend tests, frontend tests, Playwright E2E, and migrations.
-- Enforce coverage thresholds in CI.
-- Add production hardening such as rate limiting, token rotation or refresh tokens, monitoring, and structured logs.
