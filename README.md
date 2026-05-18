@@ -207,10 +207,18 @@ pnpm exec playwright install
 Latest local verification:
 
 ```txt
-pnpm lint       passed
-pnpm typecheck  passed
-pnpm web:test   passed, 14 files and 50 tests
-pnpm test:e2e   passed, 1 Playwright test
+pnpm lint          passed
+pnpm typecheck     passed
+pnpm api:coverage  passed, 6 suites and 35 tests
+pnpm web:coverage  passed, 14 files and 58 tests
+pnpm test:e2e      passed, 1 Playwright test
+```
+
+Current test coverage:
+
+```txt
+Backend  statements 100%    branches 96.66%  functions 100%  lines 100%
+Frontend statements 99.35%  branches 92.64%  functions 98%   lines 100%
 ```
 
 ## API Contract
