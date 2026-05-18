@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
 import { AuthService } from './core/auth/auth.service';
 import { NotificationService } from './core/notifications/notification.service';
@@ -17,7 +17,7 @@ import { NotificationService } from './core/notifications/notification.service';
       <nav aria-label="Primary navigation">
         @if (auth.isAuthenticated()) {
           <a routerLink="/tasks" routerLinkActive="active">Tasks</a>
-          <button type="button" (click)="auth.logout()">Sign out</button>
+          <button type="button" (click)="signOut()">Sign out</button>
         } @else {
           <a routerLink="/login" routerLinkActive="active">Sign in</a>
           <a routerLink="/register" routerLinkActive="active">Register</a>
@@ -157,4 +157,10 @@ import { NotificationService } from './core/notifications/notification.service';
 export class AppComponent {
   readonly auth = inject(AuthService);
   readonly notifications = inject(NotificationService);
+  private readonly router = inject(Router);
+
+  async signOut() {
+    this.auth.logout();
+    await this.router.navigate(['/login']);
+  }
 }
