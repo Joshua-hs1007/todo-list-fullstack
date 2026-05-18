@@ -17,6 +17,7 @@ function setup(id: string | null) {
     clearSelectedTask: vi.fn(),
     createTask: vi.fn().mockResolvedValue(task),
     updateTask: vi.fn().mockResolvedValue(task),
+    deleteTask: vi.fn().mockResolvedValue(true),
   };
   const router = { navigate: vi.fn().mockResolvedValue(true) };
   const notifications = { showSuccess: vi.fn() };
@@ -24,7 +25,12 @@ function setup(id: string | null) {
     providers: [
       {
         provide: ActivatedRoute,
-        useValue: { snapshot: { paramMap: convertToParamMap(id ? { id } : {}) } },
+        useValue: {
+          snapshot: {
+            paramMap: convertToParamMap(id ? { id } : {}),
+            queryParamMap: convertToParamMap({}),
+          },
+        },
       },
       { provide: Router, useValue: router },
       { provide: TaskStore, useValue: store },
@@ -34,6 +40,26 @@ function setup(id: string | null) {
   const page = runInInjectionContext(injector, () => new TaskDetailPage());
 
   return { notifications, page, router, store };
+}
+
+function setupEditRoute() {
+  const context = setup('task-1');
+  const route = {
+    snapshot: {
+      paramMap: convertToParamMap({ id: 'task-1' }),
+      queryParamMap: convertToParamMap({ edit: 'true' }),
+    },
+  };
+  const injector = Injector.create({
+    providers: [
+      { provide: ActivatedRoute, useValue: route },
+      { provide: Router, useValue: context.router },
+      { provide: TaskStore, useValue: context.store },
+      { provide: NotificationService, useValue: context.notifications },
+    ],
+  });
+
+  return { ...context, page: runInInjectionContext(injector, () => new TaskDetailPage()) };
 }
 
 describe('TaskDetailPage', () => {
@@ -50,13 +76,15 @@ describe('TaskDetailPage', () => {
     const { notifications, page, router, store } = setup('task-1');
 
     page.ngOnInit();
+    page.startEditing();
     await page.save({ title: 'Updated' });
 
     expect(page.isNew()).toBe(false);
+    expect(page.isEditing()).toBe(false);
     expect(store.loadTask).toHaveBeenCalledWith('task-1');
     expect(store.updateTask).toHaveBeenCalledWith('task-1', { title: 'Updated' });
     expect(notifications.showSuccess).toHaveBeenCalledWith('Task updated.');
-    expect(router.navigate).toHaveBeenCalledWith(['/tasks']);
+    expect(router.navigate).not.toHaveBeenCalled();
   });
 
   it('creates new tasks and stays put when saving fails', async () => {
@@ -70,5 +98,39 @@ describe('TaskDetailPage', () => {
     expect(notifications.showSuccess).toHaveBeenCalledWith('Task created.');
     expect(router.navigate).toHaveBeenCalledWith(['/tasks']);
     expect(router.navigate).toHaveBeenCalledTimes(1);
+  });
+
+  it('opens existing tasks in edit mode from the edit action route', () => {
+    const { page, store } = setupEditRoute();
+
+    page.ngOnInit();
+
+    expect(page.isEditing()).toBe(true);
+    expect(store.loadTask).toHaveBeenCalledWith('task-1');
+  });
+
+  it('deletes an existing task after confirmation', async () => {
+    const { notifications, page, router, store } = setup('task-1');
+
+    page.requestDelete('task-1');
+    await page.confirmDelete();
+
+    expect(store.deleteTask).toHaveBeenCalledWith('task-1');
+    expect(page.pendingDeleteTaskId()).toBeNull();
+    expect(notifications.showSuccess).toHaveBeenCalledWith('Task deleted.');
+    expect(router.navigate).toHaveBeenCalledWith(['/tasks']);
+  });
+
+  it('cancels and ignores empty delete confirmations', async () => {
+    const { notifications, page, router, store } = setup('task-1');
+
+    page.requestDelete('task-1');
+    page.cancelDelete();
+    await page.confirmDelete();
+
+    expect(page.pendingDeleteTaskId()).toBeNull();
+    expect(store.deleteTask).not.toHaveBeenCalled();
+    expect(notifications.showSuccess).not.toHaveBeenCalled();
+    expect(router.navigate).not.toHaveBeenCalled();
   });
 });

@@ -20,8 +20,25 @@ import type { ApiTask } from '../../core/api/api-client';
       </div>
       <div class="actions">
         <span [class]="statusClass">{{ statusLabel }}</span>
-        <button type="button" (click)="delete.emit(task().id)" aria-label="Delete task">
-          Delete
+        <a
+          [routerLink]="['/tasks', task().id]"
+          [queryParams]="{ edit: 'true' }"
+          class="icon-action edit-action"
+          aria-label="Edit task"
+          title="Edit task"
+        >
+          <span aria-hidden="true">✎</span>
+          <span>Edit</span>
+        </a>
+        <button
+          type="button"
+          class="icon-action danger-action"
+          (click)="delete.emit(task().id)"
+          aria-label="Delete task"
+          title="Delete task"
+        >
+          <span aria-hidden="true">×</span>
+          <span>Delete</span>
         </button>
       </div>
     </article>
@@ -107,17 +124,33 @@ import type { ApiTask } from '../../core/api/api-client';
         color: var(--success);
       }
 
-      button {
+      .icon-action {
+        align-items: center;
         background: #ffffff;
         border: 1px solid var(--border-strong);
         border-radius: 6px;
-        color: var(--danger);
         cursor: pointer;
+        display: inline-flex;
+        gap: 0.35rem;
         font-weight: 700;
+        min-height: 2.35rem;
         padding: 0.4rem 0.65rem;
+        text-decoration: none;
       }
 
-      button:hover {
+      .edit-action {
+        color: var(--primary);
+      }
+
+      .edit-action:hover {
+        background: var(--surface-muted);
+      }
+
+      .danger-action {
+        color: var(--danger);
+      }
+
+      .danger-action:hover {
         background: var(--danger-soft);
         border-color: #f3b6ae;
       }
