@@ -23,6 +23,7 @@ const setup = (tasks: ApiTask[] = [], deleteTask = vi.fn().mockResolvedValue(tru
     loadTasks: vi.fn(),
     setQuery: vi.fn(),
     reorderTasks: vi.fn(),
+    updateTask: vi.fn().mockResolvedValue(task('updated-task')),
     deleteTask,
   };
   const notifications = { showSuccess: vi.fn() };
@@ -46,6 +47,7 @@ describe('TaskListPage', () => {
       loadTasks: vi.fn(),
       setQuery: vi.fn(),
       reorderTasks: vi.fn(),
+      updateTask: vi.fn(),
       deleteTask: vi.fn(),
     };
     const injector = Injector.create({
@@ -72,12 +74,15 @@ describe('TaskListPage', () => {
     ]);
 
     expect(page.totalTasks()).toBe(4);
-    expect(page.todoTasks()).toBe(2);
+    expect(page.todoTaskCount()).toBe(2);
+    expect(page.todoTaskItems()).toHaveLength(2);
+    expect(page.inProgressTaskItems()).toHaveLength(1);
+    expect(page.doneTaskItems()).toHaveLength(1);
     expect(page.inProgressTasks()).toBe(1);
     expect(page.doneTasks()).toBe(1);
   });
 
-  it('passes reordered tasks to the store and opens delete confirmation', () => {
+  it('passes same-column reordered tasks to the store and opens delete confirmation', async () => {
     const first = task('task-1');
     const second = task('task-2');
     const store = {
@@ -87,6 +92,7 @@ describe('TaskListPage', () => {
       loadTasks: vi.fn(),
       setQuery: vi.fn(),
       reorderTasks: vi.fn(),
+      updateTask: vi.fn(),
       deleteTask: vi.fn().mockResolvedValue(true),
     };
     const notifications = { showSuccess: vi.fn() };
@@ -98,13 +104,71 @@ describe('TaskListPage', () => {
     });
     const page = runInInjectionContext(injector, () => new TaskListPage());
 
-    page.drop({ previousIndex: 0, currentIndex: 1 } as CdkDragDrop<ApiTask[]>);
+    await page.drop(
+      {
+        previousIndex: 0,
+        currentIndex: 1,
+        item: { data: first },
+      } as CdkDragDrop<ApiTask[]>,
+      'TODO',
+    );
     page.requestDelete('task-1');
 
     expect(store.reorderTasks).toHaveBeenCalledWith([second, first]);
+    expect(store.updateTask).not.toHaveBeenCalled();
     expect(page.pendingDeleteTask()).toEqual(first);
     expect(store.deleteTask).not.toHaveBeenCalled();
     expect(notifications.showSuccess).not.toHaveBeenCalled();
+  });
+
+  it('updates status and order when a task moves to another column', async () => {
+    const todo = task('task-1');
+    const inProgress = { ...task('task-2'), status: 'IN_PROGRESS' as const };
+    const { page, store } = setup([todo, inProgress]);
+
+    await page.drop(
+      {
+        previousIndex: 0,
+        currentIndex: 1,
+        item: { data: todo },
+      } as CdkDragDrop<ApiTask[]>,
+      'IN_PROGRESS',
+    );
+
+    expect(store.updateTask).toHaveBeenCalledWith('task-1', {
+      title: 'task-1',
+      description: undefined,
+      dueDate: undefined,
+      status: 'IN_PROGRESS',
+    });
+    expect(store.reorderTasks).toHaveBeenCalledWith([
+      inProgress,
+      { ...todo, status: 'IN_PROGRESS' },
+    ]);
+  });
+
+  it('reloads tasks without reordering when a cross-column status update fails', async () => {
+    const todo = task('task-1');
+    const { page, store } = setup([todo]);
+    store.updateTask.mockResolvedValueOnce(null);
+
+    await page.drop(
+      {
+        previousIndex: 0,
+        currentIndex: 0,
+        item: { data: todo },
+      } as CdkDragDrop<ApiTask[]>,
+      'DONE',
+    );
+
+    expect(store.updateTask).toHaveBeenCalledWith('task-1', {
+      title: 'task-1',
+      description: undefined,
+      dueDate: undefined,
+      status: 'DONE',
+    });
+    expect(store.loadTasks).toHaveBeenCalledTimes(1);
+    expect(store.reorderTasks).not.toHaveBeenCalled();
   });
 
   it('deletes only after confirmation and shows a notification', async () => {
@@ -117,6 +181,7 @@ describe('TaskListPage', () => {
       loadTasks: vi.fn(),
       setQuery: vi.fn(),
       reorderTasks: vi.fn(),
+      updateTask: vi.fn(),
       deleteTask: vi.fn().mockResolvedValue(true),
     };
     const notifications = { showSuccess: vi.fn() };
@@ -146,6 +211,7 @@ describe('TaskListPage', () => {
       loadTasks: vi.fn(),
       setQuery: vi.fn(),
       reorderTasks: vi.fn(),
+      updateTask: vi.fn(),
       deleteTask: vi.fn(),
     };
     const injector = Injector.create({

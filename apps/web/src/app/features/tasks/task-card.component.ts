@@ -18,8 +18,11 @@ import type { ApiTask } from '../../core/api/api-client';
           <time [dateTime]="task().dueDate">Due {{ formattedDueDate }}</time>
         }
       </div>
+
       <div class="actions">
-        <span [class]="statusClass">{{ statusLabel }}</span>
+        @if (showStatus()) {
+          <span [class]="statusClass">{{ statusLabel }}</span>
+        }
         <a
           [routerLink]="['/tasks', task().id]"
           [queryParams]="{ edit: 'true' }"
@@ -27,7 +30,10 @@ import type { ApiTask } from '../../core/api/api-client';
           aria-label="Edit task"
           title="Edit task"
         >
-          <span aria-hidden="true">✎</span>
+          <svg aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M4 20h4l10.5-10.5-4-4L4 16v4Z" />
+            <path d="m13.5 6.5 4 4" />
+          </svg>
           <span>Edit</span>
         </a>
         <button
@@ -37,7 +43,13 @@ import type { ApiTask } from '../../core/api/api-client';
           aria-label="Delete task"
           title="Delete task"
         >
-          <span aria-hidden="true">×</span>
+          <svg aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M4 7h16" />
+            <path d="M10 11v6" />
+            <path d="M14 11v6" />
+            <path d="M6 7l1 14h10l1-14" />
+            <path d="M9 7V4h6v3" />
+          </svg>
           <span>Delete</span>
         </button>
       </div>
@@ -46,16 +58,15 @@ import type { ApiTask } from '../../core/api/api-client';
   styles: [
     `
       .task-card {
-        align-items: center;
         background: var(--surface);
         border: 1px solid var(--border);
         border-radius: 8px;
         box-shadow: var(--shadow-sm);
-        display: flex;
-        gap: 1rem;
-        justify-content: space-between;
+        display: grid;
+        gap: 0.9rem;
+        grid-template-columns: minmax(0, 1fr);
         min-height: 72px;
-        padding: 1rem;
+        padding: 0.95rem;
         transition:
           border-color 160ms ease,
           box-shadow 160ms ease,
@@ -69,16 +80,21 @@ import type { ApiTask } from '../../core/api/api-client';
       }
 
       .task-main {
+        display: grid;
+        gap: 0.35rem;
         min-width: 0;
       }
 
-      a {
+      .task-main a {
         color: var(--text);
-        font-weight: 750;
+        display: inline-block;
+        font-weight: 800;
+        max-width: 100%;
+        overflow-wrap: anywhere;
         text-decoration: none;
       }
 
-      a:hover {
+      .task-main a:hover {
         color: var(--primary);
       }
 
@@ -87,14 +103,18 @@ import type { ApiTask } from '../../core/api/api-client';
         color: var(--muted);
         display: block;
         font-size: 0.92rem;
-        margin: 0.35rem 0 0;
+        line-height: 1.45;
+        margin: 0;
+        overflow-wrap: anywhere;
       }
 
       .actions {
-        align-items: center;
-        display: flex;
-        flex-shrink: 0;
-        gap: 0.75rem;
+        border-top: 1px solid var(--border);
+        display: grid;
+        gap: 0.5rem;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        min-width: 0;
+        padding-top: 0.75rem;
       }
 
       .status {
@@ -102,9 +122,13 @@ import type { ApiTask } from '../../core/api/api-client';
         border-radius: 999px;
         font-size: 0.78rem;
         font-weight: 800;
-        padding: 0.28rem 0.6rem;
+        grid-column: 1 / -1;
+        justify-content: center;
+        padding: 0.35rem 0.6rem;
+        text-align: center;
         text-transform: capitalize;
         white-space: nowrap;
+        width: 100%;
       }
 
       .status-todo {
@@ -131,15 +155,27 @@ import type { ApiTask } from '../../core/api/api-client';
         border-radius: 6px;
         cursor: pointer;
         display: inline-flex;
-        gap: 0.35rem;
-        font-weight: 700;
-        min-height: 2.35rem;
-        padding: 0.4rem 0.65rem;
+        gap: 0.4rem;
+        justify-content: center;
+        min-height: 2.4rem;
+        padding: 0.45rem 0.65rem;
         text-decoration: none;
+        width: 100%;
+      }
+
+      .icon-action svg {
+        fill: none;
+        height: 1rem;
+        stroke: currentColor;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 2;
+        width: 1rem;
       }
 
       .edit-action {
         color: var(--primary);
+        font-weight: 750;
       }
 
       .edit-action:hover {
@@ -148,25 +184,19 @@ import type { ApiTask } from '../../core/api/api-client';
 
       .danger-action {
         color: var(--danger);
+        font-weight: 750;
       }
 
       .danger-action:hover {
         background: var(--danger-soft);
         border-color: #f3b6ae;
       }
-
-      @media (max-width: 640px) {
-        .task-card,
-        .actions {
-          align-items: flex-start;
-          flex-direction: column;
-        }
-      }
     `,
   ],
 })
 export class TaskCardComponent {
   readonly task = input.required<ApiTask>();
+  readonly showStatus = input(true);
   readonly delete = output<string>();
 
   get statusLabel() {

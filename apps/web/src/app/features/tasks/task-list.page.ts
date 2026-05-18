@@ -1,16 +1,20 @@
-import { CdkDrag, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
+import { CdkDrag, CdkDropList, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import type { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { Component, computed, inject, signal } from '@angular/core';
 import type { OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-import type { ApiTask } from '../../core/api/api-client';
+import type { ApiTask, TaskSaveInput } from '../../core/api/api-client';
 import { NotificationService } from '../../core/notifications/notification.service';
 import { TaskCardComponent } from './task-card.component';
 import { TaskSearchComponent } from './task-search.component';
 import { TaskSummaryComponent } from './task-summary.component';
 import { TaskStore } from './task.store';
 import type { TaskStatusFilter } from './task.store';
+
+type TaskStatus = ApiTask['status'];
+
+const taskStatuses: TaskStatus[] = ['TODO', 'IN_PROGRESS', 'DONE'];
 
 @Component({
   standalone: true,
@@ -35,7 +39,7 @@ import type { TaskStatusFilter } from './task.store';
 
       <app-task-summary
         [total]="totalTasks()"
-        [todo]="todoTasks()"
+        [todo]="todoTaskCount()"
         [inProgress]="inProgressTasks()"
         [done]="doneTasks()"
       />
@@ -49,19 +53,96 @@ import type { TaskStatusFilter } from './task.store';
       @if (store.loading()) {
         <div class="state-panel" aria-live="polite">Loading tasks...</div>
       } @else {
-        <div cdkDropList class="task-list" (cdkDropListDropped)="drop($event)">
-          @for (task of store.tasks(); track task.id) {
-            <div cdkDrag>
-              <app-task-card [task]="task" (delete)="requestDelete($event)" />
-            </div>
-          } @empty {
-            <div class="state-panel empty">
-              <h2>No tasks found</h2>
-              <p>Create a task or adjust the current search and status filters.</p>
-              <a routerLink="/tasks/new" class="secondary-button">Create task</a>
-            </div>
-          }
-        </div>
+        @if (store.tasks().length) {
+          <div class="task-board" aria-label="Task board">
+            <section class="task-column">
+              <header class="column-header">
+                <h2>To do</h2>
+                <span>{{ todoTaskItems().length }}</span>
+              </header>
+              <div
+                cdkDropList
+                id="TODO"
+                class="task-list"
+                [cdkDropListData]="todoTaskItems()"
+                [cdkDropListConnectedTo]="columnIds"
+                (cdkDropListDropped)="drop($event, 'TODO')"
+              >
+                @for (task of todoTaskItems(); track task.id) {
+                  <div cdkDrag [cdkDragData]="task">
+                    <app-task-card
+                      [task]="task"
+                      [showStatus]="false"
+                      (delete)="requestDelete($event)"
+                    />
+                  </div>
+                } @empty {
+                  <div class="column-empty">Drop to mark as to do.</div>
+                }
+              </div>
+            </section>
+
+            <section class="task-column">
+              <header class="column-header">
+                <h2>In progress</h2>
+                <span>{{ inProgressTaskItems().length }}</span>
+              </header>
+              <div
+                cdkDropList
+                id="IN_PROGRESS"
+                class="task-list"
+                [cdkDropListData]="inProgressTaskItems()"
+                [cdkDropListConnectedTo]="columnIds"
+                (cdkDropListDropped)="drop($event, 'IN_PROGRESS')"
+              >
+                @for (task of inProgressTaskItems(); track task.id) {
+                  <div cdkDrag [cdkDragData]="task">
+                    <app-task-card
+                      [task]="task"
+                      [showStatus]="false"
+                      (delete)="requestDelete($event)"
+                    />
+                  </div>
+                } @empty {
+                  <div class="column-empty">Drop to start work.</div>
+                }
+              </div>
+            </section>
+
+            <section class="task-column">
+              <header class="column-header">
+                <h2>Done</h2>
+                <span>{{ doneTaskItems().length }}</span>
+              </header>
+              <div
+                cdkDropList
+                id="DONE"
+                class="task-list"
+                [cdkDropListData]="doneTaskItems()"
+                [cdkDropListConnectedTo]="columnIds"
+                (cdkDropListDropped)="drop($event, 'DONE')"
+              >
+                @for (task of doneTaskItems(); track task.id) {
+                  <div cdkDrag [cdkDragData]="task">
+                    <app-task-card
+                      [task]="task"
+                      [showStatus]="false"
+                      (delete)="requestDelete($event)"
+                    />
+                  </div>
+                } @empty {
+                  <div class="column-empty">Drop when complete.</div>
+                }
+              </div>
+            </section>
+          </div>
+        } @else {
+          <div class="state-panel empty">
+            <h2>No tasks found</h2>
+            <p>Create a task or adjust the current search and status filters.</p>
+            <a routerLink="/tasks/new" class="secondary-button">Create task</a>
+          </div>
+        }
       }
     </section>
 
@@ -127,9 +208,62 @@ import type { TaskStatusFilter } from './task.store';
         margin-bottom: 0;
       }
 
+      .task-board {
+        align-items: start;
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: repeat(3, minmax(240px, 1fr));
+      }
+
+      .task-column {
+        background: var(--surface-muted);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        display: grid;
+        gap: 0.75rem;
+        min-width: 0;
+        padding: 0.75rem;
+      }
+
+      .column-header {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .column-header h2 {
+        font-size: 1rem;
+        margin: 0;
+      }
+
+      .column-header span {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        color: var(--muted);
+        display: inline-flex;
+        font-size: 0.78rem;
+        font-weight: 800;
+        height: 1.65rem;
+        justify-content: center;
+        min-width: 1.65rem;
+        padding: 0 0.45rem;
+      }
+
       .task-list {
         display: grid;
         gap: 0.75rem;
+        min-height: 8rem;
+      }
+
+      .column-empty {
+        border: 1px dashed var(--border-strong);
+        border-radius: 8px;
+        color: var(--muted);
+        font-size: 0.9rem;
+        padding: 1rem;
+        text-align: center;
       }
 
       .button,
@@ -262,11 +396,16 @@ import type { TaskStatusFilter } from './task.store';
         color: #ffffff;
       }
 
-      @media (max-width: 720px) {
+      @media (max-width: 920px) {
         .page-header {
           align-items: flex-start;
           flex-direction: column;
         }
+
+        .task-board {
+          grid-template-columns: 1fr;
+        }
+
         .modal-actions {
           flex-direction: column-reverse;
         }
@@ -277,9 +416,13 @@ import type { TaskStatusFilter } from './task.store';
 export class TaskListPage implements OnInit {
   readonly store = inject(TaskStore);
   private readonly notifications = inject(NotificationService);
+  readonly columnIds = taskStatuses;
   readonly pendingDeleteTask = signal<ApiTask | null>(null);
   readonly totalTasks = computed(() => this.store.tasks().length);
-  readonly todoTasks = computed(
+  readonly todoTaskItems = computed(() => this.tasksByStatus('TODO'));
+  readonly inProgressTaskItems = computed(() => this.tasksByStatus('IN_PROGRESS'));
+  readonly doneTaskItems = computed(() => this.tasksByStatus('DONE'));
+  readonly todoTaskCount = computed(
     () => this.store.tasks().filter((task) => task.status === 'TODO').length,
   );
   readonly inProgressTasks = computed(
@@ -298,10 +441,45 @@ export class TaskListPage implements OnInit {
     void this.store.loadTasks();
   }
 
-  drop(event: CdkDragDrop<ApiTask[]>) {
-    const tasks = [...this.store.tasks()];
-    moveItemInArray(tasks, event.previousIndex, event.currentIndex);
-    void this.store.reorderTasks(tasks);
+  async drop(event: CdkDragDrop<ApiTask[]>, targetStatus: TaskStatus) {
+    const task = event.item.data as ApiTask | undefined;
+
+    if (!task) {
+      return;
+    }
+
+    const columns = this.createColumns();
+    const sourceTasks = columns[task.status];
+    const targetTasks = columns[targetStatus];
+    const sourceIndex = sourceTasks.findIndex((item) => item.id === task.id);
+
+    if (sourceIndex === -1) {
+      return;
+    }
+
+    if (task.status === targetStatus) {
+      moveItemInArray(targetTasks, sourceIndex, event.currentIndex);
+    } else {
+      sourceTasks.splice(sourceIndex, 1);
+      transferArrayItem(
+        [{ ...task, status: targetStatus }],
+        targetTasks,
+        0,
+        event.currentIndex,
+      );
+
+      const updated = await this.store.updateTask(
+        task.id,
+        this.statusUpdateInput(task, targetStatus),
+      );
+
+      if (!updated) {
+        await this.store.loadTasks();
+        return;
+      }
+    }
+
+    await this.store.reorderTasks(this.flattenColumns(columns));
   }
 
   requestDelete(id: string) {
@@ -329,5 +507,30 @@ export class TaskListPage implements OnInit {
       this.pendingDeleteTask.set(null);
       this.notifications.showSuccess('Task deleted.');
     }
+  }
+
+  private tasksByStatus(status: TaskStatus) {
+    return this.store.tasks().filter((task) => task.status === status);
+  }
+
+  private createColumns() {
+    return {
+      TODO: this.todoTaskItems().map((task) => ({ ...task })),
+      IN_PROGRESS: this.inProgressTaskItems().map((task) => ({ ...task })),
+      DONE: this.doneTaskItems().map((task) => ({ ...task })),
+    } satisfies Record<TaskStatus, ApiTask[]>;
+  }
+
+  private flattenColumns(columns: Record<TaskStatus, ApiTask[]>) {
+    return taskStatuses.flatMap((status) => columns[status]);
+  }
+
+  private statusUpdateInput(task: ApiTask, status: TaskStatus): TaskSaveInput {
+    return {
+      title: task.title,
+      description: task.description ?? undefined,
+      dueDate: task.dueDate ?? undefined,
+      status,
+    };
   }
 }
