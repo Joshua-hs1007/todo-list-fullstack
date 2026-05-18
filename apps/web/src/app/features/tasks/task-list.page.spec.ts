@@ -66,11 +66,13 @@ describe('TaskListPage', () => {
   it('computes task summary counts by status', () => {
     const { page } = setup([
       task('task-1'),
+      task('task-4'),
       { ...task('task-2'), status: 'IN_PROGRESS' },
       { ...task('task-3'), status: 'DONE' },
     ]);
 
-    expect(page.totalTasks()).toBe(3);
+    expect(page.totalTasks()).toBe(4);
+    expect(page.todoTasks()).toBe(2);
     expect(page.inProgressTasks()).toBe(1);
     expect(page.doneTasks()).toBe(1);
   });

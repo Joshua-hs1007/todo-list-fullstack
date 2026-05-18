@@ -8,12 +8,20 @@ import type { ApiTask } from '../../core/api/api-client';
 import { NotificationService } from '../../core/notifications/notification.service';
 import { TaskCardComponent } from './task-card.component';
 import { TaskSearchComponent } from './task-search.component';
+import { TaskSummaryComponent } from './task-summary.component';
 import { TaskStore } from './task.store';
 import type { TaskStatusFilter } from './task.store';
 
 @Component({
   standalone: true,
-  imports: [CdkDrag, CdkDropList, RouterLink, TaskCardComponent, TaskSearchComponent],
+  imports: [
+    CdkDrag,
+    CdkDropList,
+    RouterLink,
+    TaskCardComponent,
+    TaskSearchComponent,
+    TaskSummaryComponent,
+  ],
   template: `
     <section class="tasks-page">
       <header class="page-header">
@@ -25,20 +33,12 @@ import type { TaskStatusFilter } from './task.store';
         <a routerLink="/tasks/new" class="button">New task</a>
       </header>
 
-      <div class="summary-grid" aria-label="Task summary">
-        <div>
-          <span>Total</span>
-          <strong>{{ totalTasks() }}</strong>
-        </div>
-        <div>
-          <span>In progress</span>
-          <strong>{{ inProgressTasks() }}</strong>
-        </div>
-        <div>
-          <span>Done</span>
-          <strong>{{ doneTasks() }}</strong>
-        </div>
-      </div>
+      <app-task-summary
+        [total]="totalTasks()"
+        [todo]="todoTasks()"
+        [inProgress]="inProgressTasks()"
+        [done]="doneTasks()"
+      />
 
       <app-task-search (queryChange)="search($event)" />
 
@@ -125,34 +125,6 @@ import type { TaskStatusFilter } from './task.store';
       .subtitle {
         color: var(--muted);
         margin-bottom: 0;
-      }
-
-      .summary-grid {
-        display: grid;
-        gap: 0.8rem;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-      }
-
-      .summary-grid div {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        box-shadow: var(--shadow-sm);
-        display: grid;
-        gap: 0.2rem;
-        padding: 1rem;
-      }
-
-      .summary-grid span {
-        color: var(--muted);
-        font-size: 0.8rem;
-        font-weight: 750;
-      }
-
-      .summary-grid strong {
-        color: var(--text);
-        font-size: 1.7rem;
-        line-height: 1;
       }
 
       .task-list {
@@ -295,11 +267,6 @@ import type { TaskStatusFilter } from './task.store';
           align-items: flex-start;
           flex-direction: column;
         }
-
-        .summary-grid {
-          grid-template-columns: 1fr;
-        }
-
         .modal-actions {
           flex-direction: column-reverse;
         }
@@ -312,6 +279,9 @@ export class TaskListPage implements OnInit {
   private readonly notifications = inject(NotificationService);
   readonly pendingDeleteTask = signal<ApiTask | null>(null);
   readonly totalTasks = computed(() => this.store.tasks().length);
+  readonly todoTasks = computed(
+    () => this.store.tasks().filter((task) => task.status === 'TODO').length,
+  );
   readonly inProgressTasks = computed(
     () => this.store.tasks().filter((task) => task.status === 'IN_PROGRESS').length,
   );
