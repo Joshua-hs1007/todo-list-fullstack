@@ -10,6 +10,12 @@ import { errorHandler, notFoundHandler } from './middleware/error.middleware.js'
 import { authRoutes } from './modules/auth/auth.routes.js';
 import { taskRoutes } from './modules/tasks/task.routes.js';
 
+const healthResponse = {
+  name: 'To Do List API',
+  description: 'Express API for the full-stack To Do List application.',
+  status: 'ok',
+};
+
 export function createApp(): Express {
   const app = express();
 
@@ -17,8 +23,8 @@ export function createApp(): Express {
   app.use(cors({ origin: env.CLIENT_URL, credentials: true }));
   app.use(express.json());
 
-  app.get('/health', (_request, response) => {
-    response.status(200).json({ status: 'ok' });
+  app.get(['/', '/health'], (_request, response) => {
+    response.status(200).json(healthResponse);
   });
 
   app.get('/api/openapi.json', (_request, response) => {

@@ -50,9 +50,20 @@ describe('app routes', () => {
   });
 
   it('serves health and OpenAPI documents', async () => {
+    const healthBody = {
+      name: 'To Do List API',
+      description: 'Express API for the full-stack To Do List application.',
+      status: 'ok',
+    };
+
+    await expect(request(app).get('/')).resolves.toMatchObject({
+      status: 200,
+      body: healthBody,
+    });
+
     await expect(request(app).get('/health')).resolves.toMatchObject({
       status: 200,
-      body: { status: 'ok' },
+      body: healthBody,
     });
 
     const openApiResponse = await request(app).get('/api/openapi.json');
