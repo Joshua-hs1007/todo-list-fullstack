@@ -16,6 +16,7 @@
     "api:test": "pnpm --filter @todo/api test",
     "api:test:coverage": "pnpm --filter @todo/api test:coverage",
     "web:dev": "pnpm --filter @todo/web dev",
+    "web:prod": "pnpm --filter @todo/web prod",
     "web:build": "pnpm --filter @todo/web build",
     "web:test": "pnpm --filter @todo/web test",
     "web:test:coverage": "pnpm --filter @todo/web test:coverage",
