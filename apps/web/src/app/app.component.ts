@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
 import { AuthService } from './core/auth/auth.service';
@@ -17,6 +17,9 @@ import { NotificationService } from './core/notifications/notification.service';
       <nav aria-label="Primary navigation">
         @if (auth.isAuthenticated()) {
           <a routerLink="/tasks" routerLinkActive="active">Tasks</a>
+          @if (signedInEmail(); as email) {
+            <span class="signed-in-email" [title]="email">{{ email }}</span>
+          }
           <button type="button" (click)="signOut()">Sign out</button>
         } @else {
           <a routerLink="/login" routerLinkActive="active">Sign in</a>
@@ -94,6 +97,17 @@ import { NotificationService } from './core/notifications/notification.service';
         color: var(--text);
       }
 
+      .signed-in-email {
+        color: var(--muted);
+        font-size: 0.9rem;
+        font-weight: 650;
+        max-width: min(240px, 34vw);
+        overflow: hidden;
+        padding: 0.5rem 0.4rem;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
       nav button {
         background: transparent;
         border: 1px solid var(--border);
@@ -157,6 +171,7 @@ import { NotificationService } from './core/notifications/notification.service';
 export class AppComponent {
   readonly auth = inject(AuthService);
   readonly notifications = inject(NotificationService);
+  readonly signedInEmail = computed(() => this.auth.user()?.email ?? null);
   private readonly router = inject(Router);
 
   async signOut() {
