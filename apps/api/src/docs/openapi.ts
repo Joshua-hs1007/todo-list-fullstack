@@ -14,9 +14,15 @@ export const openApiDocument = {
     version: '0.1.0',
   },
   servers: [{ url: 'http://localhost:3000' }],
+  tags: [
+    { name: 'System', description: 'Service health and metadata endpoints' },
+    { name: 'Auth', description: 'Registration, login, and current user endpoints' },
+    { name: 'Tasks', description: 'Authenticated task management endpoints' },
+  ],
   paths: {
     '/health': {
       get: {
+        tags: ['System'],
         summary: 'Health check',
         responses: {
           '200': {
@@ -36,6 +42,7 @@ export const openApiDocument = {
     },
     '/api/auth/register': {
       post: {
+        tags: ['Auth'],
         summary: 'Register a user',
         requestBody: { $ref: '#/components/requestBodies/AuthCredentials' },
         responses: {
@@ -46,6 +53,7 @@ export const openApiDocument = {
     },
     '/api/auth/login': {
       post: {
+        tags: ['Auth'],
         summary: 'Log in',
         requestBody: { $ref: '#/components/requestBodies/AuthCredentials' },
         responses: {
@@ -57,6 +65,7 @@ export const openApiDocument = {
     },
     '/api/auth/me': {
       get: {
+        tags: ['Auth'],
         summary: 'Current user',
         security: [{ bearerAuth: [] }],
         responses: {
@@ -78,6 +87,7 @@ export const openApiDocument = {
     },
     '/api/tasks': {
       get: {
+        tags: ['Tasks'],
         summary: 'List tasks',
         security: [{ bearerAuth: [] }],
         parameters: [
@@ -90,6 +100,7 @@ export const openApiDocument = {
         },
       },
       post: {
+        tags: ['Tasks'],
         summary: 'Create task',
         security: [{ bearerAuth: [] }],
         requestBody: { $ref: '#/components/requestBodies/TaskWrite' },
@@ -102,6 +113,7 @@ export const openApiDocument = {
     },
     '/api/tasks/reorder': {
       patch: {
+        tags: ['Tasks'],
         summary: 'Reorder tasks',
         security: [{ bearerAuth: [] }],
         requestBody: {
@@ -133,6 +145,7 @@ export const openApiDocument = {
     },
     '/api/tasks/{id}': {
       get: {
+        tags: ['Tasks'],
         summary: 'Get task',
         security: [{ bearerAuth: [] }],
         parameters: [{ $ref: '#/components/parameters/TaskId' }],
@@ -144,6 +157,7 @@ export const openApiDocument = {
         },
       },
       patch: {
+        tags: ['Tasks'],
         summary: 'Update task',
         security: [{ bearerAuth: [] }],
         parameters: [{ $ref: '#/components/parameters/TaskId' }],
@@ -157,6 +171,7 @@ export const openApiDocument = {
         },
       },
       delete: {
+        tags: ['Tasks'],
         summary: 'Delete task',
         security: [{ bearerAuth: [] }],
         parameters: [{ $ref: '#/components/parameters/TaskId' }],

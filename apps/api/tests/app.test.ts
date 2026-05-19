@@ -70,6 +70,14 @@ describe('app routes', () => {
 
     expect(openApiResponse.status).toBe(200);
     expect(openApiResponse.body.info.title).toBe('To Do List API');
+    expect(openApiResponse.body.tags).toEqual([
+      expect.objectContaining({ name: 'System' }),
+      expect.objectContaining({ name: 'Auth' }),
+      expect.objectContaining({ name: 'Tasks' }),
+    ]);
+    expect(openApiResponse.body.paths['/health'].get.tags).toEqual(['System']);
+    expect(openApiResponse.body.paths['/api/auth/login'].post.tags).toEqual(['Auth']);
+    expect(openApiResponse.body.paths['/api/tasks'].get.tags).toEqual(['Tasks']);
   });
 
   it('validates auth payloads and registers users', async () => {
